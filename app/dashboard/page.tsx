@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma'
+import prisma from '../../../lib/prisma'
 import SalesChart from '@/components/SalesChart'
 
 export default async function DashboardPage() {
