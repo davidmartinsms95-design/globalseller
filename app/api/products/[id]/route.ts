@@ -1,12 +1,16 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from '../../../../lib/prisma'
 import { NextResponse } from 'next/server'
-
-const prisma = new PrismaClient()
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: {
+    params: Promise<{
+      id: string
+    }>
+  }
 ) {
+  const params = await context.params
+
   const product = await prisma.product.findUnique({
     where: {
       id: params.id,
@@ -18,8 +22,14 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: {
+    params: Promise<{
+      id: string
+    }>
+  }
 ) {
+  const params = await context.params
+
   const body = await req.json()
 
   const product = await prisma.product.update({
@@ -36,4 +46,25 @@ export async function PUT(
   })
 
   return NextResponse.json(product)
+}
+
+export async function DELETE(
+  req: Request,
+  context: {
+    params: Promise<{
+      id: string
+    }>
+  }
+) {
+  const params = await context.params
+
+  await prisma.product.delete({
+    where: {
+      id: params.id,
+    },
+  })
+
+  return NextResponse.json({
+    message: 'Produto deletado',
+  })
 }

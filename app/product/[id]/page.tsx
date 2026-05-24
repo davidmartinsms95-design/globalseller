@@ -29,7 +29,7 @@ export default async function ProductPage({
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 md:grid-cols-2">
         <div>
           <img
-            src={product.image}
+            src={product.image || '/placeholder.png'}
             alt={product.title}
             className="w-full rounded-3xl"
           />
