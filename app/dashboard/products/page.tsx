@@ -28,7 +28,11 @@ export default function NewProductPage() {
 
     console.log(data)
 
-    setImage(data.url)
+    if (data.url) {
+      setImage(data.url)
+    } else {
+      alert('Erro upload')
+    }
   }
 
   async function handleCreateProduct() {
@@ -65,7 +69,7 @@ export default function NewProductPage() {
 
       <div className="rounded-2xl bg-white p-8 shadow">
         <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
+          <label className="mb-2 block font-bold">
             Nome do Produto
           </label>
 
@@ -73,12 +77,12 @@ export default function NewProductPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
+            className="w-full rounded-xl border p-4"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
+          <label className="mb-2 block font-bold">
             Preço
           </label>
 
@@ -86,12 +90,12 @@ export default function NewProductPage() {
             type="number"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
+            className="w-full rounded-xl border p-4"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
+          <label className="mb-2 block font-bold">
             Categoria
           </label>
 
@@ -99,19 +103,19 @@ export default function NewProductPage() {
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
+            className="w-full rounded-xl border p-4"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
+          <label className="mb-2 block font-bold">
             Imagem
           </label>
 
           <input
             type="file"
             onChange={handleUpload}
-            className="w-full text-black"
+            className="w-full"
           />
 
           {image && (
