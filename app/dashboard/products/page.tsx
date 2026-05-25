@@ -1,93 +1,134 @@
-import Link from 'next/link'
-import prisma from '../../../lib/prisma'
+'use client'
 
-async function handleDelete(id: string) {
-  'use server'
+import { useState } from 'react'
 
-  await prisma.product.delete({
-    where: {
-      id,
-    },
-  })
-}
+export default function NewProductPage() {
+  const [title, setTitle] = useState('')
+  const [price, setPrice] = useState('')
+  const [category, setCategory] = useState('')
+  const [image, setImage] = useState('')
 
-export default async function ProductsPage() {
-  const products = await prisma.product.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
+  async function handleUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0]
+
+    if (!file) return
+
+    const formData = new FormData()
+
+    formData.append('file', file)
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    const data = await response.json()
+
+    console.log(data)
+
+    setImage(data.url)
+  }
+
+  async function handleCreateProduct() {
+    const response = await fetch('/api/products', {
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify({
+        title,
+        price,
+        category,
+        image,
+      }),
+    })
+
+    if (response.ok) {
+      alert('Produto criado com sucesso!')
+
+      setTitle('')
+      setPrice('')
+      setCategory('')
+      setImage('')
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-black p-8 text-white">
-      <div className="mb-10 flex items-center justify-between">
-        <div>
-          <h1 className="text-5xl font-bold">
-            Produtos
-          </h1>
+    <div className="max-w-2xl">
+      <h1 className="mb-8 text-4xl font-bold">
+        Novo Produto
+      </h1>
 
-          <p className="mt-2 text-zinc-400">
-            Gerencie seus produtos
-          </p>
+      <div className="rounded-2xl bg-white p-8 shadow">
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Nome do Produto
+          </label>
+
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-xl border p-4 text-black"
+          />
         </div>
 
-        <Link
-          href="/dashboard/products/new"
-          className="rounded-2xl bg-yellow-400 px-6 py-3 font-bold text-black transition hover:bg-yellow-300"
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Preço
+          </label>
+
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="w-full rounded-xl border p-4 text-black"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Categoria
+          </label>
+
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-xl border p-4 text-black"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Imagem
+          </label>
+
+          <input
+            type="file"
+            onChange={handleUpload}
+            className="w-full text-black"
+          />
+
+          {image && (
+            <img
+              src={image}
+              alt=""
+              className="mt-4 h-40 rounded-xl object-cover"
+            />
+          )}
+        </div>
+
+        <button
+          onClick={handleCreateProduct}
+          className="rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white"
         >
-          Novo Produto
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900"
-          >
-            {product.image ? (
-              <img
-                src={product.image}
-                alt={product.title}
-                className="h-72 w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-72 items-center justify-center bg-zinc-800 text-zinc-500">
-                Sem imagem
-              </div>
-            )}
-
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-white">
-                {product.title}
-              </h2>
-
-              <p className="mt-2 text-zinc-400">
-                Categoria: {product.category}
-              </p>
-
-              <p className="mt-4 text-3xl font-bold text-yellow-400">
-                R$ {product.price}
-              </p>
-
-              <Link
-                href={`/dashboard/products/edit/${product.id}`}
-                className="mt-6 block w-full rounded-2xl bg-blue-500 px-4 py-3 text-center font-bold transition hover:bg-blue-400"
-              >
-                Editar
-              </Link>
-
-              <form action={handleDelete.bind(null, product.id)}>
-                <button
-                  type="submit"
-                  className="mt-4 w-full rounded-2xl bg-red-500 px-4 py-3 font-bold transition hover:bg-red-400"
-                >
-                  Excluir
-                </button>
-              </form>
-            </div>
-          </div>
-        ))}
+          Salvar Produto
+        </button>
       </div>
     </div>
   )

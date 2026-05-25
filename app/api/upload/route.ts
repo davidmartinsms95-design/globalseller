@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     }
 
     const bytes = await file.arrayBuffer()
+
     const buffer = Buffer.from(bytes)
 
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
       url: uploadResponse.secure_url,
     })
   } catch (error) {
-    console.log(error)
+    console.log('UPLOAD ERROR:', error)
 
     return NextResponse.json(
       {
