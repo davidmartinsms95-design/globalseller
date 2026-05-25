@@ -15,31 +15,18 @@ export default function NewProductPage() {
 
     if (!file) return
 
-    const reader = new FileReader()
+    const formData = new FormData()
 
-    reader.readAsDataURL(file)
+    formData.append('file', file)
 
-    reader.onloadend = async () => {
-      const response = await fetch(
-        '/api/upload',
-        {
-          method: 'POST',
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
 
-          headers: {
-            'Content-Type':
-              'application/json',
-          },
+    const data = await response.json()
 
-          body: JSON.stringify({
-            image: reader.result,
-          }),
-        }
-      )
-
-      const data = await response.json()
-
-      setImage(data.url)
-    }
+    setImage(data.url)
   }
 
   async function handleCreateProduct() {
@@ -76,7 +63,7 @@ export default function NewProductPage() {
 
       <div className="rounded-2xl bg-white p-8 shadow">
         <div className="mb-6">
-          <label className="mb-2 block font-bold">
+          <label className="mb-2 block font-bold text-black">
             Nome do Produto
           </label>
 
@@ -84,12 +71,12 @@ export default function NewProductPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-xl border p-4"
+            className="w-full rounded-xl border p-4 text-black"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block font-bold">
+          <label className="mb-2 block font-bold text-black">
             Preço
           </label>
 
@@ -97,12 +84,12 @@ export default function NewProductPage() {
             type="number"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full rounded-xl border p-4"
+            className="w-full rounded-xl border p-4 text-black"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block font-bold">
+          <label className="mb-2 block font-bold text-black">
             Categoria
           </label>
 
@@ -110,19 +97,19 @@ export default function NewProductPage() {
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-xl border p-4"
+            className="w-full rounded-xl border p-4 text-black"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-2 block font-bold">
+          <label className="mb-2 block font-bold text-black">
             Imagem
           </label>
 
           <input
             type="file"
             onChange={handleUpload}
-            className="w-full"
+            className="w-full text-black"
           />
 
           {image && (
