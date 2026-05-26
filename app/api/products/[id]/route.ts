@@ -1,91 +1,156 @@
-import { NextResponse } from 'next/server'
-import prisma from '../../../../lib/prisma'
+'use client'
 
-interface Params {
-  params: {
-    id: string
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+
+export default function EditProductPage() {
+  const params = useParams()
+  const router = useRouter()
+
+  const [title, setTitle] = useState('')
+  const [price, setPrice] = useState('')
+  const [category, setCategory] = useState('')
+  const [image, setImage] = useState('')
+
+  async function loadProduct() {
+    const response = await fetch(
+      `/api/products/${params.id}`
+    )
+
+    const data = await response.json()
+
+    setTitle(data.title)
+    setPrice(data.price)
+    setCategory(data.category)
+    setImage(data.image)
   }
-}
 
-export async function GET(
-  req: Request,
-  { params }: Params
-) {
-  try {
-    const product = await prisma.product.findUnique({
-      where: {
-        id: params.id,
-      },
+  useEffect(() => {
+    loadProduct()
+  }, [])
+
+  async function handleUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0]
+
+    if (!file) return
+
+    const formData = new FormData()
+
+    formData.append('file', file)
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
     })
 
-    return NextResponse.json(product)
-  } catch (error) {
-    return NextResponse.json(
+    const data = await response.json()
+
+    if (data.url) {
+      setImage(data.url)
+    }
+  }
+
+  async function handleUpdateProduct() {
+    const response = await fetch(
+      `/api/products/${params.id}`,
       {
-        error: 'Erro ao buscar produto',
-      },
-      {
-        status: 500,
+        method: 'PUT',
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          title,
+          price,
+          category,
+          image,
+        }),
       }
     )
+
+    if (response.ok) {
+      alert('Produto atualizado!')
+
+      router.push('/dashboard/products')
+    }
   }
-}
 
-export async function PUT(
-  req: Request,
-  { params }: Params
-) {
-  try {
-    const body = await req.json()
+  return (
+    <div className="max-w-2xl p-10">
+      <h1 className="mb-8 text-4xl font-bold">
+        Editar Produto
+      </h1>
 
-    const product = await prisma.product.update({
-      where: {
-        id: params.id,
-      },
+      <div className="rounded-2xl bg-white p-8 shadow">
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Nome
+          </label>
 
-      data: {
-        title: body.title,
-        price: Number(body.price),
-        category: body.category,
-        image: body.image,
-      },
-    })
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-xl border p-4 text-black"
+          />
+        </div>
 
-    return NextResponse.json(product)
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: 'Erro ao atualizar produto',
-      },
-      {
-        status: 500,
-      }
-    )
-  }
-}
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Preço
+          </label>
 
-export async function DELETE(
-  req: Request,
-  { params }: Params
-) {
-  try {
-    await prisma.product.delete({
-      where: {
-        id: params.id,
-      },
-    })
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="w-full rounded-xl border p-4 text-black"
+          />
+        </div>
 
-    return NextResponse.json({
-      message: 'Produto deletado',
-    })
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: 'Erro ao deletar produto',
-      },
-      {
-        status: 500,
-      }
-    )
-  }
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Categoria
+          </label>
+
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-xl border p-4 text-black"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 block font-bold text-black">
+            Imagem
+          </label>
+
+          <input
+            type="file"
+            onChange={handleUpload}
+            className="w-full text-black"
+          />
+
+          {image && (
+            <img
+              src={image}
+              alt=""
+              className="mt-4 h-40 rounded-xl object-cover"
+            />
+          )}
+        </div>
+
+        <button
+          onClick={handleUpdateProduct}
+          className="rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white"
+        >
+          Salvar Alterações
+        </button>
+      </div>
+    </div>
+  )
 }
