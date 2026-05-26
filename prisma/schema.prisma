@@ -8,11 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  password     String
+  createdAt    DateTime @default(now())
+
+  plan         String   @default("free")
+  maxProducts  Int      @default(5)
 
   products Product[]
   orders   Order[]
