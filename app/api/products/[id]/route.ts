@@ -1,70 +1,34 @@
-import prisma from '../../../../lib/prisma'
 import { NextResponse } from 'next/server'
+import prisma from '../../../../lib/prisma'
 
-export async function GET(
-  req: Request,
-  context: {
-    params: Promise<{
-      id: string
-    }>
+interface Params {
+  params: {
+    id: string
   }
-) {
-  const params = await context.params
-
-  const product = await prisma.product.findUnique({
-    where: {
-      id: params.id,
-    },
-  })
-
-  return NextResponse.json(product)
-}
-
-export async function PUT(
-  req: Request,
-  context: {
-    params: Promise<{
-      id: string
-    }>
-  }
-) {
-  const params = await context.params
-
-  const body = await req.json()
-
-  const product = await prisma.product.update({
-    where: {
-      id: params.id,
-    },
-
-    data: {
-      title: body.title,
-      price: Number(body.price),
-      category: body.category,
-      image: body.image,
-    },
-  })
-
-  return NextResponse.json(product)
 }
 
 export async function DELETE(
   req: Request,
-  context: {
-    params: Promise<{
-      id: string
-    }>
-  }
+  { params }: Params
 ) {
-  const params = await context.params
+  try {
+    await prisma.product.delete({
+      where: {
+        id: params.id,
+      },
+    })
 
-  await prisma.product.delete({
-    where: {
-      id: params.id,
-    },
-  })
-
-  return NextResponse.json({
-    message: 'Produto deletado',
-  })
+    return NextResponse.json({
+      message: 'Produto deletado',
+    })
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: 'Erro ao deletar produto',
+      },
+      {
+        status: 500,
+      }
+    )
+  }
 }
