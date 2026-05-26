@@ -1,155 +1,102 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
 
-export default function EditProductPage() {
-  const params = useParams()
-  const router = useRouter()
+interface Product {
+  id: string
+  title: string
+  price: number
+  category: string
+  image: string
+}
 
-  const [title, setTitle] = useState('')
-  const [price, setPrice] = useState('')
-  const [category, setCategory] = useState('')
-  const [image, setImage] = useState('')
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([])
 
-  async function loadProduct() {
-    const response = await fetch(
-      `/api/products/${params.id}`
-    )
+  async function loadProducts() {
+    const response = await fetch('/api/products')
 
     const data = await response.json()
 
-    setTitle(data.title)
-    setPrice(data.price)
-    setCategory(data.category)
-    setImage(data.image)
+    setProducts(data)
+  }
+
+  async function handleDelete(id: string) {
+    const confirmDelete = confirm(
+      'Deseja excluir este produto?'
+    )
+
+    if (!confirmDelete) return
+
+    await fetch(`/api/products/${id}`, {
+      method: 'DELETE',
+    })
+
+    loadProducts()
   }
 
   useEffect(() => {
-    loadProduct()
+    loadProducts()
   }, [])
 
-  async function handleUpload(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const file = e.target.files?.[0]
-
-    if (!file) return
-
-    const formData = new FormData()
-
-    formData.append('file', file)
-
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    })
-
-    const data = await response.json()
-
-    if (data.url) {
-      setImage(data.url)
-    }
-  }
-
-  async function handleUpdateProduct() {
-    const response = await fetch(
-      `/api/products/${params.id}`,
-      {
-        method: 'PUT',
-
-        headers: {
-          'Content-Type': 'application/json',
-        },
-
-        body: JSON.stringify({
-          title,
-          price,
-          category,
-          image,
-        }),
-      }
-    )
-
-    if (response.ok) {
-      alert('Produto atualizado!')
-
-      router.push('/dashboard/products')
-    }
-  }
-
   return (
-    <div className="max-w-2xl p-10">
-      <h1 className="mb-8 text-4xl font-bold">
-        Editar Produto
-      </h1>
+    <div className="p-10">
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="text-4xl font-bold">
+          Produtos
+        </h1>
 
-      <div className="rounded-2xl bg-white p-8 shadow">
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Nome
-          </label>
-
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Preço
-          </label>
-
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Categoria
-          </label>
-
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Imagem
-          </label>
-
-          <input
-            type="file"
-            onChange={handleUpload}
-            className="w-full text-black"
-          />
-
-          {image && (
-            <img
-              src={image}
-              alt=""
-              className="mt-4 h-40 rounded-xl object-cover"
-            />
-          )}
-        </div>
-
-        <button
-          onClick={handleUpdateProduct}
-          className="rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white"
+        <a
+          href="/dashboard/products/new"
+          className="rounded-xl bg-orange-500 px-5 py-3 font-bold text-white"
         >
-          Salvar Alterações
-        </button>
+          Novo Produto
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="rounded-2xl bg-white p-4 shadow"
+          >
+            <img
+              src={product.image}
+              alt={product.title}
+              className="mb-4 h-48 w-full rounded-xl object-cover"
+            />
+
+            <h2 className="text-xl font-bold text-black">
+              {product.title}
+            </h2>
+
+            <p className="mt-2 text-gray-600">
+              {product.category}
+            </p>
+
+            <p className="mt-4 text-2xl font-bold text-orange-500">
+              R$ {product.price}
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <a
+                href={`/dashboard/products/${product.id}`}
+                className="rounded-xl bg-blue-500 px-4 py-2 font-bold text-white"
+              >
+                Editar
+              </a>
+
+              <button
+                onClick={() =>
+                  handleDelete(product.id)
+                }
+                className="rounded-xl bg-red-500 px-4 py-2 font-bold text-white"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
