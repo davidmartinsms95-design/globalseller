@@ -3,22 +3,21 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  password     String
-  createdAt    DateTime @default(now())
-
-  plan         String   @default("free")
-  maxProducts  Int      @default(5)
-
-  products Product[]
-  orders   Order[]
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String
+  createdAt   DateTime  @default(now())
+  maxProducts Int       @default(5)
+  plan        String    @default("free")
+  orders      Order[]
+  products    Product[]
 }
 
 model Product {
@@ -28,32 +27,21 @@ model Product {
   category  String
   image     String?
   createdAt DateTime @default(now())
-
-  userId String
-  user   User @relation(fields: [userId], references: [id])
-
-  orders Order[]
+  userId    String
+  orders    Order[]
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Order {
   id                String   @id @default(cuid())
-
   productId         String
   sellerId          String
-
   amount            Float
-
   status            String   @default("pending")
-
   paymentId         String?
-
   externalReference String?
-
   customerEmail     String?
-
   createdAt         DateTime @default(now())
-
-  product Product @relation(fields: [productId], references: [id])
-
-  seller User @relation(fields: [sellerId], references: [id])
+  product           Product  @relation(fields: [productId], references: [id])
+  seller            User     @relation(fields: [sellerId], references: [id])
 }

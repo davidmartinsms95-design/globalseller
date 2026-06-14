@@ -1,126 +1,150 @@
-import prisma from '../../../lib/prisma'
+'use client'
 
-export default async function OrdersPage() {
-  const orders = await prisma.order.findMany({
-    include: {
-      product: true,
-    },
+import { useEffect, useState } from 'react'
 
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
+interface Order {
+  id: number
+
+  status: string
+
+  total_amount: number
+
+  date_created: string
+
+  buyer: string
+
+  shipping: string
+}
+
+export default function MercadoLivreOrdersPage() {
+  const [orders, setOrders] = useState<
+    Order[]
+  >([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  async function loadOrders() {
+    try {
+      const response = await fetch(
+        '/api/integrations/mercadolivre/orders'
+      )
+
+      const data = await response.json()
+
+      setOrders(data)
+
+      setLoading(false)
+    } catch (error) {
+      console.log(error)
+
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadOrders()
+  }, [])
 
   return (
     <div>
-      <div className="mb-10 flex items-center justify-between">
-        <div>
-          <h1 className="text-5xl font-bold text-white">
-            Pedidos
-          </h1>
+      <div className="mb-12">
+        <h1 className="text-5xl font-bold text-yellow-400">
+          Pedidos Mercado Livre
+        </h1>
 
-          <p className="mt-3 text-zinc-400">
-            Gerencie todos os pedidos
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-zinc-900 px-6 py-4">
-          <p className="text-sm text-zinc-400">
-            Total de pedidos
-          </p>
-
-          <h2 className="mt-2 text-3xl font-bold text-orange-500">
-            {orders.length}
-          </h2>
-        </div>
+        <p className="mt-4 text-zinc-400">
+          Pedidos sincronizados da sua conta
+          Mercado Livre.
+        </p>
       </div>
 
-      <div className="overflow-x-auto rounded-3xl border border-zinc-800 bg-zinc-900">
-        <table className="w-full">
-          <thead className="border-b border-zinc-800">
-            <tr>
-              <th className="p-5 text-left text-zinc-400">
-                Produto
-              </th>
+      {loading ? (
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-10">
+          <p className="text-xl text-zinc-400">
+            Importando pedidos...
+          </p>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-10">
+          <p className="text-xl text-zinc-400">
+            Nenhum pedido encontrado.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Pedido #{order.id}
+                  </h2>
 
-              <th className="p-5 text-left text-zinc-400">
-                Cliente
-              </th>
+                  <p className="mt-2 text-zinc-400">
+                    Cliente:
+                    {' '}
+                    {order.buyer}
+                  </p>
+                </div>
 
-              <th className="p-5 text-left text-zinc-400">
-                Valor
-              </th>
+                <div className="rounded-2xl bg-yellow-400 px-4 py-2 font-bold text-black">
+                  Mercado Livre
+                </div>
+              </div>
 
-              <th className="p-5 text-left text-zinc-400">
-                Status
-              </th>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div className="rounded-2xl bg-black p-5">
+                  <p className="text-sm text-zinc-400">
+                    Valor
+                  </p>
 
-              <th className="p-5 text-left text-zinc-400">
-                Payment ID
-              </th>
-            </tr>
-          </thead>
+                  <h3 className="mt-2 text-3xl font-bold text-green-500">
+                    R$ {order.total_amount}
+                  </h3>
+                </div>
 
-          <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b border-zinc-800 transition hover:bg-zinc-800"
-              >
-                <td className="p-5">
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={order.product.image}
-                      alt=""
-                      className="h-16 w-16 rounded-xl object-cover"
-                    />
+                <div className="rounded-2xl bg-black p-5">
+                  <p className="text-sm text-zinc-400">
+                    Status
+                  </p>
 
-                    <div>
-                      <p className="font-bold text-white">
-                        {order.product.title}
-                      </p>
+                  <h3 className="mt-2 text-xl font-bold text-white">
+                    {order.status}
+                  </h3>
+                </div>
 
-                      <p className="text-sm text-zinc-400">
-                        {order.id}
-                      </p>
-                    </div>
-                  </div>
-                </td>
+                <div className="rounded-2xl bg-black p-5">
+                  <p className="text-sm text-zinc-400">
+                    Entrega
+                  </p>
 
-                <td className="p-5 text-zinc-300">
-                  {order.customerEmail}
-                </td>
+                  <h3 className="mt-2 text-xl font-bold text-orange-400">
+                    {order.shipping}
+                  </h3>
+                </div>
 
-                <td className="p-5 text-2xl font-bold text-green-500">
-                  R$ {order.amount}
-                </td>
+                <div className="rounded-2xl bg-black p-5">
+                  <p className="text-sm text-zinc-400">
+                    Data
+                  </p>
 
-                <td className="p-5">
-                  {order.status ===
-                  'approved' ? (
-                    <span className="rounded-full bg-green-500 px-4 py-2 font-bold text-white">
-                      Pago
-                    </span>
-                  ) : order.status ===
-                    'pending' ? (
-                    <span className="rounded-full bg-yellow-500 px-4 py-2 font-bold text-black">
-                      Pendente
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-red-500 px-4 py-2 font-bold text-white">
-                      Cancelado
-                    </span>
-                  )}
-                </td>
-
-                <td className="p-5 text-sm text-zinc-400">
-                  {order.paymentId}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  <h3 className="mt-2 text-sm font-bold text-white">
+                    {new Date(
+                      order.date_created
+                    ).toLocaleDateString(
+                      'pt-BR'
+                    )}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

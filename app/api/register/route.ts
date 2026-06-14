@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
+
 import prisma from '../../../lib/prisma'
+
 import bcrypt from 'bcryptjs'
+
+import { resend } from '../../../lib/resend'
+
+import WelcomeEmail from '../../../emails/welcome-email'
 
 export async function POST(req: Request) {
   try {
@@ -33,6 +39,19 @@ export async function POST(req: Request) {
         email: body.email,
         password: hashedPassword,
       },
+    })
+
+    await resend.emails.send({
+      from: 'GlobalSeller <onboarding@resend.dev>',
+
+      to: user.email,
+
+      subject:
+        'Bem-vindo ao GlobalSeller 🚀',
+
+      react: WelcomeEmail({
+        name: user.name,
+      }),
     })
 
     return NextResponse.json(user)

@@ -2,23 +2,15 @@
 
 import { useEffect, useState } from 'react'
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
-
 interface Product {
   id: string
+  stock?: number
 }
 
 interface Order {
   id: string
-  status: string
-  total: number
+  amount?: number
+  status?: string
 }
 
 export default function DashboardPage() {
@@ -26,72 +18,54 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([])
 
   async function loadData() {
-    const productsResponse = await fetch(
-      '/api/products'
-    )
+    try {
+      const [productsResponse, ordersResponse] =
+        await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/orders'),
+        ])
 
-    const productsData =
-      await productsResponse.json()
+      const productsData =
+        await productsResponse.json()
 
-    setProducts(productsData)
+      const ordersData =
+        await ordersResponse.json()
 
-    const ordersResponse = await fetch(
-      '/api/orders'
-    )
+      setProducts(
+        Array.isArray(productsData)
+          ? productsData
+          : []
+      )
 
-    const ordersData =
-      await ordersResponse.json()
+      setOrders(
+        Array.isArray(ordersData)
+          ? ordersData
+          : []
+      )
+    } catch (error) {
+      console.error(
+        'ERRO CARREGAR DASHBOARD:',
+        error
+      )
 
-    setOrders(ordersData)
+      setProducts([])
+      setOrders([])
+    }
   }
 
   useEffect(() => {
     loadData()
   }, [])
 
-  const paidOrders = orders.filter(
-    (order) => order.status === 'paid'
-  )
-
-  const totalSales = paidOrders.reduce(
-    (acc, order) => acc + order.total,
+  const totalSales = orders.reduce(
+    (acc, order) =>
+      acc + Number(order.amount || 0),
     0
   )
 
-  const chartData = [
-    {
-      name: 'Seg',
-      vendas: 400,
-    },
-    {
-      name: 'Ter',
-      vendas: 700,
-    },
-    {
-      name: 'Qua',
-      vendas: 300,
-    },
-    {
-      name: 'Qui',
-      vendas: 900,
-    },
-    {
-      name: 'Sex',
-      vendas: 1200,
-    },
-    {
-      name: 'Sáb',
-      vendas: 500,
-    },
-    {
-      name: 'Dom',
-      vendas: 1500,
-    },
-  ]
-
   return (
-    <div>
-      <h1 className="mb-10 text-5xl font-bold">
+    <div className="p-10">
+      <h1 className="mb-8 text-5xl font-bold text-white">
         Dashboard
       </h1>
 
@@ -101,18 +75,18 @@ export default function DashboardPage() {
             Produtos
           </p>
 
-          <h2 className="mt-4 text-5xl font-bold">
+          <h2 className="mt-4 text-5xl font-bold text-white">
             {products.length}
           </h2>
         </div>
 
         <div className="rounded-3xl bg-zinc-900 p-8">
           <p className="text-zinc-400">
-            Pedidos Pagos
+            Pedidos
           </p>
 
-          <h2 className="mt-4 text-5xl font-bold text-green-500">
-            {paidOrders.length}
+          <h2 className="mt-4 text-5xl font-bold text-white">
+            {orders.length}
           </h2>
         </div>
 
@@ -121,46 +95,28 @@ export default function DashboardPage() {
             Faturamento
           </p>
 
-          <h2 className="mt-4 text-5xl font-bold text-orange-500">
+          <h2 className="mt-4 text-5xl font-bold text-green-500">
             R$ {totalSales}
           </h2>
         </div>
       </div>
 
       <div className="mt-10 rounded-3xl bg-zinc-900 p-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold">
-              Vendas da Semana
-            </h2>
+        <h2 className="mb-6 text-3xl font-bold text-white">
+          Resumo
+        </h2>
 
-            <p className="mt-2 text-zinc-400">
-              Performance de vendas
-            </p>
-          </div>
-        </div>
+        <p className="text-zinc-400">
+          Sistema conectado ao banco de dados.
+        </p>
 
-        <div className="h-96">
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-          >
-            <LineChart data={chartData}>
-              <XAxis dataKey="name" />
+        <p className="mt-3 text-zinc-400">
+          Produtos cadastrados: {products.length}
+        </p>
 
-              <YAxis />
-
-              <Tooltip />
-
-              <Line
-                type="monotone"
-                dataKey="vendas"
-                stroke="#f97316"
-                strokeWidth={4}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <p className="mt-3 text-zinc-400">
+          Pedidos cadastrados: {orders.length}
+        </p>
       </div>
     </div>
   )

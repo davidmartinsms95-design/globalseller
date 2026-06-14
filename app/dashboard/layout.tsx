@@ -16,11 +16,17 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-[#0f0f12] text-white">
       <aside className="w-72 border-r border-zinc-800 bg-black p-8">
-        <h1 className="mb-10 text-3xl font-bold text-orange-500">
-          GlobalSeller
-        </h1>
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-orange-500">
+            GlobalSeller
+          </h1>
 
-        <nav className="space-y-4">
+          <p className="mt-2 text-sm text-zinc-500">
+            Plataforma SaaS
+          </p>
+        </div>
+
+        <nav className="space-y-3">
           <a
             href="/dashboard"
             className="block rounded-xl px-4 py-3 transition hover:bg-zinc-900"
@@ -43,6 +49,13 @@ export default async function DashboardLayout({
           </a>
 
           <a
+            href="/dashboard/plans"
+            className="block rounded-xl bg-orange-500 px-4 py-3 font-bold text-white transition hover:bg-orange-400"
+          >
+            Upgrade PRO
+          </a>
+
+          <a
             href="/"
             className="block rounded-xl px-4 py-3 transition hover:bg-zinc-900"
           >
@@ -50,12 +63,26 @@ export default async function DashboardLayout({
           </a>
         </nav>
 
-        <div className="mt-16 rounded-2xl bg-zinc-900 p-5">
+        <div className="mt-16 rounded-3xl border border-orange-500/20 bg-orange-500/10 p-5">
+          <p className="text-sm text-orange-300">
+            Plano Atual
+          </p>
+
+          <h2 className="mt-2 text-2xl font-bold">
+            FREE
+          </h2>
+
+          <p className="mt-3 text-sm text-zinc-300">
+            Máximo de 5 produtos
+          </p>
+        </div>
+
+        <div className="mt-6 rounded-2xl bg-zinc-900 p-5">
           <p className="text-sm text-zinc-400">
             Logado como
           </p>
 
-          <p className="mt-2 font-bold">
+          <p className="mt-2 font-bold break-all">
             {session.user?.email}
           </p>
         </div>

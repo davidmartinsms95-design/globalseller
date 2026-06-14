@@ -1,6 +1,11 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import {
+  use,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 export default function CheckoutPage({
   params,
@@ -9,128 +14,160 @@ export default function CheckoutPage({
 }) {
   const { id } = use(params)
 
-  const [pixCode, setPixCode] = useState('')
-  const [qrCode, setQrCode] = useState('')
-  const [copied, setCopied] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const hasGeneratedPix = useRef(false)
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [pixCode, setPixCode] =
+    useState('')
+
+  const [pixImage, setPixImage] =
+    useState('')
+
+  const [orderId, setOrderId] =
+    useState('')
 
   useEffect(() => {
+    if (hasGeneratedPix.current)
+      return
+
+    hasGeneratedPix.current = true
+
     async function generatePix() {
       try {
-        const response = await fetch('/api/checkout', {
-          method: 'POST',
+        const productResponse =
+          await fetch(
+            `/api/products/${id}`
+          )
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        const product =
+          await productResponse.json()
 
-          body: JSON.stringify({
-            productId: id,
-            title: 'Produto Premium',
-            amount: 10,
-          }),
-        })
+        if (!product.id) {
+          alert(
+            'Produto não encontrado'
+          )
 
-        const data = await response.json()
+          return
+        }
 
-        setPixCode(data.qr_code)
+        const response =
+          await fetch(
+            '/api/checkout',
+            {
+              method: 'POST',
 
-        setQrCode(
-          `data:image/png;base64,${data.qr_code_base64}`
+              headers: {
+                'Content-Type':
+                  'application/json',
+              },
+
+              body: JSON.stringify({
+                productId:
+                  product.id,
+
+                sellerId:
+                  product.userId,
+
+                title:
+                  product.title,
+
+                amount:
+                  product.price,
+              }),
+            }
+          )
+
+        const data =
+          await response.json()
+
+        setPixCode(
+          data.qr_code || ''
         )
 
-        setLoading(false)
+        setPixImage(
+          data.qr_code_base64 || ''
+        )
+
+        setOrderId(
+          data.orderId || ''
+        )
       } catch (error) {
         console.log(error)
+
+        alert(
+          'Erro ao gerar PIX'
+        )
+      } finally {
+        setLoading(false)
       }
     }
 
     generatePix()
   }, [id])
 
-  async function copyPixCode() {
-    try {
-      await navigator.clipboard.writeText(
-        pixCode
-      )
+  async function copyPix() {
+    await navigator.clipboard.writeText(
+      pixCode
+    )
 
-      setCopied(true)
+    alert(
+      'PIX copiado com sucesso!'
+    )
+  }
 
-      setTimeout(() => {
-        setCopied(false)
-      }, 2000)
-    } catch (error) {
-      console.log(error)
-    }
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        Gerando PIX...
+      </div>
+    )
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#09090b] p-6 text-white">
-      <div className="w-full max-w-2xl rounded-[32px] border border-zinc-800 bg-zinc-900 p-10 shadow-2xl">
-        <div className="mb-10 text-center">
-          <h1 className="text-5xl font-bold text-orange-500">
-            Checkout PIX
-          </h1>
+    <div className="min-h-screen bg-black p-10 text-white">
+      <div className="mx-auto max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-900 p-10 text-center">
+        <h1 className="mb-8 text-4xl font-bold">
+          Pagamento PIX
+        </h1>
 
-          <p className="mt-4 text-zinc-400">
-            Pagamento seguro via Mercado Pago
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="flex h-96 items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto mb-6 h-20 w-20 animate-spin rounded-full border-4 border-orange-500 border-t-transparent"></div>
-
-              <p className="text-2xl font-bold">
-                Gerando PIX...
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div className="rounded-3xl bg-white p-6">
-              <img
-                src={qrCode}
-                alt="QR Code PIX"
-                className="mx-auto h-80 w-80 object-contain"
-              />
-            </div>
-
-            <div className="mt-8 rounded-3xl border border-zinc-800 bg-black p-6">
-              <p className="mb-4 text-lg font-bold text-zinc-300">
-                PIX Copia e Cola
-              </p>
-
-              <textarea
-                readOnly
-                value={pixCode}
-                className="h-40 w-full rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-sm text-zinc-300"
-              />
-
-              <button
-                onClick={copyPixCode}
-                className="mt-6 w-full rounded-2xl bg-orange-500 px-6 py-5 text-xl font-bold text-white transition hover:bg-orange-400"
-              >
-                {copied
-                  ? 'PIX Copiado!'
-                  : 'Copiar Código PIX'}
-              </button>
-            </div>
-
-            <div className="mt-8 rounded-3xl border border-green-500/20 bg-green-500/10 p-6">
-              <h2 className="text-2xl font-bold text-green-400">
-                Pagamento Seguro
-              </h2>
-
-              <p className="mt-3 text-zinc-300">
-                Seu pagamento será confirmado
-                automaticamente após a aprovação
-                do PIX.
-              </p>
-            </div>
-          </div>
+        {pixImage && (
+          <img
+            src={`data:image/png;base64,${pixImage}`}
+            alt="QR Code PIX"
+            className="mx-auto mb-8 w-80"
+          />
         )}
+
+        <p className="mb-4 text-zinc-400">
+          Escaneie o QR Code ou copie
+          o código PIX abaixo:
+        </p>
+
+        <textarea
+          readOnly
+          value={pixCode}
+          className="mb-6 h-40 w-full rounded-xl bg-black p-4 text-sm text-white"
+        />
+
+        <button
+          onClick={copyPix}
+          className="mb-6 rounded-xl bg-green-600 px-6 py-4 font-bold text-white hover:bg-green-700"
+        >
+          Copiar PIX
+        </button>
+
+        <p className="text-zinc-400">
+          Pedido:
+          <span className="ml-2 font-bold text-white">
+            {orderId}
+          </span>
+        </p>
+
+        <p className="mt-4 text-yellow-400">
+          Aguardando pagamento...
+        </p>
       </div>
     </div>
   )

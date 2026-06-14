@@ -12,11 +12,23 @@ export default function LoginPage() {
   ) {
     e.preventDefault()
 
-    await signIn('credentials', {
+    alert('Botão clicado')
+
+    const result = await signIn('credentials', {
       email,
       password,
-      callbackUrl: '/dashboard',
+      redirect: false,
     })
+
+    console.log(result)
+
+    alert(JSON.stringify(result))
+
+    if (result?.ok) {
+      window.location.href = '/dashboard'
+    } else {
+      alert('Login inválido')
+    }
   }
 
   return (

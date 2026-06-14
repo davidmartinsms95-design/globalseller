@@ -8,31 +8,51 @@ interface Product {
   price: number
   category: string
   image: string
+  stock?: number
+  sku?: string
 }
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
 
   async function loadProducts() {
-    const response = await fetch('/api/products')
+    try {
+      const response = await fetch('/api/products')
+      const data = await response.json()
 
-    const data = await response.json()
-
-    setProducts(data)
+      if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        setProducts([])
+      }
+    } catch (error) {
+      console.error(error)
+      setProducts([])
+    }
   }
 
-  async function handleDelete(id: string) {
+  async function deleteProduct(id: string) {
     const confirmDelete = confirm(
-      'Deseja excluir este produto?'
+      'Tem certeza que deseja excluir este produto?'
     )
 
     if (!confirmDelete) return
 
-    await fetch(`/api/products/${id}`, {
-      method: 'DELETE',
-    })
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: 'DELETE',
+      })
 
-    loadProducts()
+      if (response.ok) {
+        alert('Produto excluído com sucesso!')
+        loadProducts()
+      } else {
+        alert('Erro ao excluir produto')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Erro ao excluir produto')
+    }
   }
 
   useEffect(() => {
@@ -41,57 +61,66 @@ export default function ProductsPage() {
 
   return (
     <div className="p-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-4xl font-bold">
-          Produtos
-        </h1>
+      <div className="mb-10 flex items-center justify-between">
+        <div>
+          <h1 className="text-5xl font-bold text-white">
+            Produtos
+          </h1>
+
+          <p className="mt-3 text-zinc-400">
+            Gerencie estoque e marketplaces
+          </p>
+        </div>
 
         <a
           href="/dashboard/products/new"
-          className="rounded-xl bg-orange-500 px-5 py-3 font-bold text-white"
+          className="rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white"
         >
           Novo Produto
         </a>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <p className="mb-8 text-xl text-white">
+        Total de produtos: {products.length}
+      </p>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {products.map((product) => (
           <div
             key={product.id}
-            className="rounded-2xl bg-white p-4 shadow"
+            className="overflow-hidden rounded-[32px] border border-zinc-800 bg-zinc-900"
           >
             <img
               src={product.image}
               alt={product.title}
-              className="mb-4 h-48 w-full rounded-xl object-cover"
+              className="h-64 w-full object-cover"
             />
 
-            <h2 className="text-xl font-bold text-black">
-              {product.title}
-            </h2>
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-white">
+                {product.title}
+              </h2>
 
-            <p className="mt-2 text-gray-600">
-              {product.category}
-            </p>
+              <p className="mt-2 text-zinc-400">
+                {product.category}
+              </p>
 
-            <p className="mt-4 text-2xl font-bold text-orange-500">
-              R$ {product.price}
-            </p>
+              <p className="mt-4 text-3xl font-bold text-green-500">
+                R$ {product.price}
+              </p>
 
-            <div className="mt-6 flex gap-3">
-              <button
-                className="rounded-xl bg-blue-500 px-4 py-2 font-bold text-white"
+              <a
+                href={`/dashboard/products/edit/${product.id}`}
+                className="mt-6 block w-full rounded-xl bg-blue-600 px-4 py-3 text-center font-bold text-white hover:bg-blue-700"
               >
-                Editar
-              </button>
+                Editar Produto
+              </a>
 
               <button
-                onClick={() =>
-                  handleDelete(product.id)
-                }
-                className="rounded-xl bg-red-500 px-4 py-2 font-bold text-white"
+                onClick={() => deleteProduct(product.id)}
+                className="mt-3 w-full rounded-xl bg-red-600 px-4 py-3 font-bold text-white hover:bg-red-700"
               >
-                Excluir
+                Excluir Produto
               </button>
             </div>
           </div>

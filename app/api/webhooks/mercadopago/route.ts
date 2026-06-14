@@ -1,48 +1,72 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import prisma from '../../../../lib/prisma'
+import {
+  MercadoPagoConfig,
+  Payment,
+} from 'mercadopago'
 
-const prisma = new PrismaClient()
+const client = new MercadoPagoConfig({
+  accessToken:
+    process.env.MERCADO_PAGO_ACCESS_TOKEN!,
+})
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
 
-    console.log('WEBHOOK RECEBIDO:', body)
+    console.log(
+      'WEBHOOK MP RECEBIDO:',
+      body
+    )
 
-    if (body.action === 'payment.updated') {
-      const paymentId = body.data.id
+    if (body.type === 'payment') {
+      const payment = new Payment(client)
 
-      console.log('PAGAMENTO APROVADO:', paymentId)
+      const paymentData =
+        await payment.get({
+          id: body.data.id,
+        })
 
-      const latestOrder = await prisma.order.findFirst({
-        orderBy: {
-          createdAt: 'desc',
+      const paymentId = String(
+        paymentData.id
+      )
+
+      const status =
+        paymentData.status || 'pending'
+
+      await prisma.order.updateMany({
+        where: {
+          paymentId,
+        },
+
+        data: {
+          status,
         },
       })
 
-      if (latestOrder) {
-        await prisma.order.update({
-          where: {
-            id: latestOrder.id,
-          },
-          data: {
-            status: 'paid',
-          },
-        })
-
-        console.log('PEDIDO MARCADO COMO PAGO')
-      }
+      console.log(
+        'PEDIDO ATUALIZADO:',
+        paymentId,
+        status
+      )
     }
 
     return NextResponse.json({
       success: true,
     })
   } catch (error) {
-    console.log(error)
+    console.log(
+      'ERRO WEBHOOK MP:',
+      error
+    )
 
     return NextResponse.json(
-      { error: 'Erro webhook' },
-      { status: 500 }
+      {
+        error: 'Erro webhook',
+      },
+      {
+        status: 500,
+      }
     )
   }
 }

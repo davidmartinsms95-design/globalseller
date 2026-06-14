@@ -7,58 +7,32 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]/route'
 
 export async function GET() {
-  const session = await getServerSession(
-    authOptions
-  )
-
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      {
-        error: 'Não autorizado',
-      },
-      {
-        status: 401,
-      }
-    )
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user.email,
-    },
-  })
-
-  const orders = await prisma.order.findMany({
-    where: {
-      sellerId: user?.id,
-    },
-
-    include: {
-      product: true,
-    },
-
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
-
-  return NextResponse.json(orders)
-}
-
-export async function POST(req: Request) {
   try {
-    const body = await req.json()
+    const session = await getServerSession(
+      authOptions
+    )
 
-    const product = await prisma.product.findUnique({
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        {
+          error: 'Não autorizado',
+        },
+        {
+          status: 401,
+        }
+      )
+    }
+
+    const user = await prisma.user.findUnique({
       where: {
-        id: body.productId,
+        email: session.user.email,
       },
     })
 
-    if (!product) {
+    if (!user) {
       return NextResponse.json(
         {
-          error: 'Produto não encontrado',
+          error: 'Usuário não encontrado',
         },
         {
           status: 404,
@@ -66,28 +40,22 @@ export async function POST(req: Request) {
       )
     }
 
-    const order = await prisma.order.create({
-      data: {
-        productId: body.productId,
-
-        sellerId: product.userId,
-
-        amount: body.amount,
-
-        status: 'pending',
-
-        customerEmail:
-          body.customerEmail,
+    const orders = await prisma.order.findMany({
+      where: {
+        sellerId: user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     })
 
-    return NextResponse.json(order)
+    return NextResponse.json(orders)
   } catch (error) {
     console.log(error)
 
     return NextResponse.json(
       {
-        error: 'Erro ao criar pedido',
+        error: 'Erro ao carregar pedidos',
       },
       {
         status: 500,

@@ -1,103 +1,104 @@
-'use client'
+import { NextResponse } from 'next/server'
+import prisma from '../../../../lib/prisma'
 
-import { useEffect, useState } from 'react'
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
 
-interface Product {
-  id: string
-  title: string
-  price: number
-  category: string
-  image: string
-}
-
-export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
-
-  async function loadProducts() {
-    const response = await fetch('/api/products')
-
-    const data = await response.json()
-
-    setProducts(data)
-  }
-
-  async function handleDelete(id: string) {
-    const confirmDelete = confirm(
-      'Deseja excluir este produto?'
-    )
-
-    if (!confirmDelete) return
-
-    await fetch(`/api/products/${id}`, {
-      method: 'DELETE',
+    const product = await prisma.product.findUnique({
+      where: {
+        id,
+      },
     })
 
-    loadProducts()
+    return NextResponse.json(product)
+  } catch (error: any) {
+    console.error(error)
+
+    return NextResponse.json(
+      {
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
+    )
   }
+}
 
-  useEffect(() => {
-    loadProducts()
-  }, [])
+export async function PUT(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
 
-  return (
-    <div className="p-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-4xl font-bold">
-          Produtos
-        </h1>
+    const body = await request.json()
 
-        <a
-          href="/dashboard/products/new"
-          className="rounded-xl bg-orange-500 px-5 py-3 font-bold text-white"
-        >
-          Novo Produto
-        </a>
-      </div>
+    const product = await prisma.product.update({
+      where: {
+        id,
+      },
+      data: {
+        title: body.title,
+        price: Number(body.price),
+        category: body.category,
+        image: body.image,
+      },
+    })
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="rounded-2xl bg-white p-4 shadow"
-          >
-            <img
-              src={product.image}
-              alt={product.title}
-              className="mb-4 h-48 w-full rounded-xl object-cover"
-            />
+    return NextResponse.json(product)
+  } catch (error: any) {
+    console.error(error)
 
-            <h2 className="text-xl font-bold text-black">
-              {product.title}
-            </h2>
+    return NextResponse.json(
+      {
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
+    )
+  }
+}
 
-            <p className="mt-2 text-gray-600">
-              {product.category}
-            </p>
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
 
-            <p className="mt-4 text-2xl font-bold text-orange-500">
-              R$ {product.price}
-            </p>
+    await prisma.order.deleteMany({
+      where: {
+        productId: id,
+      },
+    })
 
-            <div className="mt-6 flex gap-3">
-              <a
-                href={`/dashboard/products/${product.id}`}
-                className="rounded-xl bg-blue-500 px-4 py-2 font-bold text-white"
-              >
-                Editar
-              </a>
+    await prisma.product.delete({
+      where: {
+        id,
+      },
+    })
 
-              <button
-                onClick={() =>
-                  handleDelete(product.id)
-                }
-                className="rounded-xl bg-red-500 px-4 py-2 font-bold text-white"
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+    return NextResponse.json({
+      success: true,
+      message: 'Produto excluído com sucesso',
+    })
+  } catch (error: any) {
+    console.error(error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
+    )
+  }
 }
