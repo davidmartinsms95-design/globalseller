@@ -5,9 +5,9 @@ export async function POST(req: Request) {
   try {
     console.log('UPLOAD START')
 
-    const formData = await req.formData()
+    const formData: any = await req.formData()
 
-    const file = formData.get('file') as File
+const file = formData.get('file') as File
 
     console.log('FILE:', file)
 

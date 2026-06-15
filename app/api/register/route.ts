@@ -41,18 +41,22 @@ export async function POST(req: Request) {
       },
     })
 
-    await resend.emails.send({
-      from: 'GlobalSeller <onboarding@resend.dev>',
+    if (resend) {
+  await resend.emails.send({
+    from: 'GlobalSeller <onboarding@resend.dev>',
 
-      to: user.email,
+    to: user.email,
 
-      subject:
-        'Bem-vindo ao GlobalSeller 🚀',
+    subject:
+      'Bem-vindo ao GlobalSeller 🚀',
 
-      react: WelcomeEmail({
-        name: user.name,
-      }),
-    })
+    react: WelcomeEmail({
+      name: user.name,
+    }),
+  })
+} else {
+  console.log('Resend desativado')
+}
 
     return NextResponse.json(user)
   } catch (error) {

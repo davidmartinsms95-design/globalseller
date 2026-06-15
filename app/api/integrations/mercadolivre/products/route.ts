@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 
-import prisma from '../../../../../../lib/prisma'
+import prisma from '../../../../../lib/prisma'
 
 import { getServerSession } from 'next-auth'
 
-import { authOptions } from '../../../../auth/[...nextauth]/route'
+import { authOptions } from '../../../auth/[...nextauth]/route'
 
 export async function GET() {
   try {
@@ -117,16 +117,15 @@ export async function GET() {
 
     return NextResponse.json(products)
   } catch (error) {
-    console.log(error)
+  console.error('ERRO ML:', error)
 
-    return NextResponse.json(
-      {
-        error:
-          'Erro importar produtos',
-      },
-      {
-        status: 500,
-      }
-    )
-  }
+  return NextResponse.json(
+    {
+      error: String(error),
+    },
+    {
+      status: 500,
+    }
+  )
+}
 }

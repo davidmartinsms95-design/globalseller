@@ -40,9 +40,14 @@ export default function FinancePage() {
 
       const data = await response.json()
 
-      setOrders(data)
+if (Array.isArray(data)) {
+  setOrders(data)
+} else {
+  console.log('ERRO ORDERS:', data)
+  setOrders([])
+}
 
-      setLoading(false)
+setLoading(false)
     } catch (error) {
       console.log(error)
 

@@ -16,16 +16,7 @@ export async function POST(req: Request) {
     */
 
     if (body.topic === 'orders_v2') {
-      await marketplaceQueue.add(
-        'order-created',
-        {
-          topic: body.topic,
-
-          resource: body.resource,
-
-          receivedAt: new Date(),
-        }
-      )
+      console.log('Webhook Mercado Livre recebido', body)
 
       console.log(
         'JOB ENVIADO FILA: order-created'

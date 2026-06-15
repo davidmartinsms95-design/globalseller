@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
-import prisma from '../../../lib/prisma'
+import crypto from 'crypto'
 
-console.log(
-  'TOKEN MP:',
-  process.env.MERCADO_PAGO_ACCESS_TOKEN
-)
+import prisma from '../../../lib/prisma'
 
 const client = new MercadoPagoConfig({
   accessToken:
@@ -15,8 +12,6 @@ const client = new MercadoPagoConfig({
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-
-    console.log('BODY RECEBIDO:', body)
 
     const externalReference =
       crypto.randomUUID()
@@ -59,16 +54,6 @@ export async function POST(req: Request) {
           body.email ||
           'cliente@globalseller.com',
       },
-    })
-
-    console.log(
-      'PEDIDO CRIADO:',
-      order
-    )
-
-    console.log('RESPOSTA MP:')
-    console.dir(response, {
-      depth: null,
     })
 
     return NextResponse.json({

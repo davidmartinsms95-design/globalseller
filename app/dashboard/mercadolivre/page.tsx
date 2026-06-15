@@ -33,7 +33,12 @@ export default function MercadoLivrePage() {
 
       const data = await response.json()
 
-      setProducts(data)
+if (Array.isArray(data)) {
+  setProducts(data)
+} else {
+  console.log('ERRO ML:', data)
+  setProducts([])
+}
 
       setLoading(false)
     } catch (error) {

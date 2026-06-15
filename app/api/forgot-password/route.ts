@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
-
 import crypto from 'crypto'
 
 import prisma from '../../../lib/prisma'
-
 import { resend } from '../../../lib/resend'
 
 export async function POST(req: Request) {
@@ -26,48 +24,49 @@ export async function POST(req: Request) {
 
     const resetLink = `https://globalseller.vercel.app/reset-password/${token}`
 
-    await resend.emails.send({
-      from: 'GlobalSeller <onboarding@resend.dev>',
+    if (resend) {
+      await resend.emails.send({
+        from: 'GlobalSeller <onboarding@resend.dev>',
+        to: user.email,
+        subject: 'Recuperação de senha 🔐',
+        html: `
+          <div style="background:#09090b;padding:40px;font-family:Arial;color:white">
+            <div style="max-width:600px;margin:auto;background:#18181b;padding:40px;border-radius:24px">
+              <h1 style="color:#f97316;font-size:40px">
+                Recuperação de senha
+              </h1>
 
-      to: user.email,
+              <p style="color:#a1a1aa;font-size:18px;line-height:30px">
+                Recebemos uma solicitação para redefinir sua senha.
+              </p>
 
-      subject: 'Recuperação de senha 🔐',
+              <a
+                href="${resetLink}"
+                style="
+                  display:inline-block;
+                  background:#f97316;
+                  color:white;
+                  padding:18px 32px;
+                  border-radius:16px;
+                  text-decoration:none;
+                  font-weight:bold;
+                  margin-top:20px;
+                "
+              >
+                Redefinir senha
+              </a>
 
-      html: `
-        <div style="background:#09090b;padding:40px;font-family:Arial;color:white">
-          <div style="max-width:600px;margin:auto;background:#18181b;padding:40px;border-radius:24px">
-            <h1 style="color:#f97316;font-size:40px">
-              Recuperação de senha
-            </h1>
-
-            <p style="color:#a1a1aa;font-size:18px;line-height:30px">
-              Recebemos uma solicitação para redefinir sua senha.
-            </p>
-
-            <a
-              href="${resetLink}"
-              style="
-                display:inline-block;
-                background:#f97316;
-                color:white;
-                padding:18px 32px;
-                border-radius:16px;
-                text-decoration:none;
-                font-weight:bold;
-                margin-top:20px;
-              "
-            >
-              Redefinir senha
-            </a>
-
-            <p style="margin-top:40px;color:#71717a">
-              Caso você não tenha solicitado,
-              ignore este email.
-            </p>
+              <p style="margin-top:40px;color:#71717a">
+                Caso você não tenha solicitado,
+                ignore este email.
+              </p>
+            </div>
           </div>
-        </div>
-      `,
-    })
+        `,
+      })
+    } else {
+      console.log('Resend desativado')
+    }
 
     return NextResponse.json({
       success: true,
@@ -77,8 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error:
-          'Erro recuperação senha',
+        error: 'Erro recuperação senha',
       },
       {
         status: 500,

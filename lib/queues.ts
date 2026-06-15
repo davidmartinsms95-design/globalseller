@@ -1,11 +1,5 @@
-import { Queue } from 'bullmq'
-
-import { redis } from './redis'
-
-export const marketplaceQueue =
-  new Queue(
-    'marketplace-events',
-    {
-      connection: redis,
-    }
-  )
+export const marketplaceQueue = {
+  add: async (...args: any[]) => {
+    console.log('Queue temporariamente desativada', args)
+  },
+}

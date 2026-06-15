@@ -14,17 +14,18 @@ export async function POST() {
     const response = await preference.create({
       body: {
         items: [
-          {
-            title: 'GlobalSeller PRO',
+  {
+    id: 'globalseller-pro',
 
-            quantity: 1,
+    title: 'GlobalSeller PRO',
 
-            currency_id: 'BRL',
+    quantity: 1,
 
-            unit_price: 49,
-          },
-        ],
+    currency_id: 'BRL',
 
+    unit_price: 49,
+  },
+],
         back_urls: {
           success:
             'https://globalseller.vercel.app/dashboard',

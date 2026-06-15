@@ -1,3 +1,4 @@
+'use client'
 export default function IntegrationsPage() {
   async function connectMercadoLivre() {
     const clientId =
