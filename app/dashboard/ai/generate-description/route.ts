@@ -1,21 +1,16 @@
 import { NextResponse } from 'next/server'
-
 import { openai } from '../../../../lib/openai'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
 
-    const {
-      title,
-      category,
-    } = body
+    const { title, category } = body
 
     if (!title || !category) {
       return NextResponse.json(
         {
-          error:
-            'Dados obrigatórios',
+          error: 'Dados obrigatórios',
         },
         {
           status: 400,
@@ -23,9 +18,16 @@ export async function POST(req: Request) {
       )
     }
 
-    /*
-      GPT REAL
-    */
+    if (!openai) {
+      return NextResponse.json(
+        {
+          error: 'OpenAI não configurada',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
 
     const completion =
       await openai.chat.completions.create({
@@ -34,7 +36,6 @@ export async function POST(req: Request) {
         messages: [
           {
             role: 'system',
-
             content: `
 Você é um especialista em copywriting para marketplaces.
 
@@ -47,10 +48,8 @@ Crie descrições:
 - prontas para Mercado Livre e Shopee
             `,
           },
-
           {
             role: 'user',
-
             content: `
 Produto: ${title}
 
@@ -80,8 +79,7 @@ Crie:
 
     return NextResponse.json(
       {
-        error:
-          'Erro gerar descrição IA',
+        error: 'Erro gerar descrição IA',
       },
       {
         status: 500,

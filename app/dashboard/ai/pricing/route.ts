@@ -20,8 +20,7 @@ export async function POST(req: Request) {
     ) {
       return NextResponse.json(
         {
-          error:
-            'Dados obrigatórios',
+          error: 'Dados obrigatórios',
         },
         {
           status: 400,
@@ -29,9 +28,16 @@ export async function POST(req: Request) {
       )
     }
 
-    /*
-      GPT Pricing IA
-    */
+    if (!openai) {
+      return NextResponse.json(
+        {
+          error: 'OpenAI não configurada',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
 
     const completion =
       await openai.chat.completions.create({
@@ -80,7 +86,7 @@ Crie:
           },
         ],
 
-                temperature: 0.8,
+        temperature: 0.8,
       })
 
     const content =
@@ -94,8 +100,7 @@ Crie:
 
     return NextResponse.json(
       {
-        error:
-          'Erro IA pricing',
+        error: 'Erro IA pricing',
       },
       {
         status: 500,
