@@ -12,14 +12,11 @@ export default function IntegrationsPage() {
     const redirectUri =
       'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
 
-    const authUrl = `
-      https://auth.mercadolivre.com.br/authorization
-      ?response_type=code
-      &client_id=${clientId}
-      &redirect_uri=${redirectUri}
-    `.replace(/\s/g, '')
+    const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`
 
-    window.location.href = authUrl
+alert(authUrl)
+
+window.location.href = authUrl
   }
 
   return (
