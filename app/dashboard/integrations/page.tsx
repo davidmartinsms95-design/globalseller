@@ -1,13 +1,17 @@
 'use client'
+
 export default function IntegrationsPage() {
   async function connectMercadoLivre() {
     const clientId =
-    process.env.NEXT_PUBLIC_MERCADO_LIVRE_CLIENT_ID
+      process.env.NEXT_PUBLIC_MERCADO_LIVRE_CLIENT_ID
 
-  console.log('CLIENT_ID:', clientId)
+    console.log('CLIENT_ID:', clientId)
 
-    cconst redirectUri =
-  'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
+    alert(`CLIENT_ID = ${clientId}`)
+
+    const redirectUri =
+      'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
+
     const authUrl = `
       https://auth.mercadolivre.com.br/authorization
       ?response_type=code
@@ -26,8 +30,7 @@ export default function IntegrationsPage() {
         </h1>
 
         <p className="mt-4 text-zinc-400">
-          Conecte marketplaces e centralize
-          sua operação.
+          Conecte marketplaces e centralize sua operação.
         </p>
       </div>
 
@@ -39,27 +42,15 @@ export default function IntegrationsPage() {
             </h2>
 
             <p className="mt-3 text-zinc-400">
-              Sincronize produtos, pedidos e
-              estoque automaticamente.
+              Sincronize produtos, pedidos e estoque automaticamente.
             </p>
           </div>
 
           <ul className="space-y-4 text-zinc-300">
-            <li>
-              ✓ Importação automática
-            </li>
-
-            <li>
-              ✓ Sincronização pedidos
-            </li>
-
-            <li>
-              ✓ Atualização estoque
-            </li>
-
-            <li>
-              ✓ Analytics marketplace
-            </li>
+            <li>✓ Importação automática</li>
+            <li>✓ Sincronização pedidos</li>
+            <li>✓ Atualização estoque</li>
+            <li>✓ Analytics marketplace</li>
           </ul>
 
           <button
