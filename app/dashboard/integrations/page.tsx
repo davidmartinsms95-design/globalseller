@@ -1,23 +1,7 @@
 'use client'
 
 export default function IntegrationsPage() {
-  async function connectMercadoLivre() {
-    const clientId =
-      process.env.NEXT_PUBLIC_MERCADO_LIVRE_CLIENT_ID
-
-    console.log('CLIENT_ID:', clientId)
-
-    alert(`CLIENT_ID = ${clientId}`)
-
-    const redirectUri =
-      'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
-
-    const authUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`
-
-alert(authUrl)
-
-window.location.href = authUrl
-  }
+  Sim. Substitua somente a função connectMercadoLivre() por esta:
 
   return (
     <div>
