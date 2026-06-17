@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
     if (!user) {
       return NextResponse.redirect(
-        ''https://globalseller-zhun.vercel.app/login''
+        'https://globalseller-zhun.vercel.app/login'
       )
     }
 
