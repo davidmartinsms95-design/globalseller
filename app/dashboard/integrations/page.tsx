@@ -1,12 +1,12 @@
 'use client'
 
 export default function IntegrationsPage() {
-  async function connectMercadoLivre() {
-    alert('CLIQUE DETECTADO')
-
-    window.location.href =
-      'https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=7497664436144745&redirect_uri=https%3A%2F%2Fglobalseller-zhun.vercel.app%2Fapi%2Fintegrations%2Fmercadolivre%2Fcallback'
-  }
+async function connectMercadoLivre() {
+  window.open(
+    'https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=7497664436144745&redirect_uri=https%3A%2F%2Fglobalseller-zhun.vercel.app%2Fapi%2Fintegrations%2Fmercadolivre%2Fcallback',
+    '_self'
+  )
+}
 
   return (
     <div>
