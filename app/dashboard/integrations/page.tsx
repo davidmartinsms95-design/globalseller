@@ -2,15 +2,7 @@
 
 export default function IntegrationsPage() {
   async function connectMercadoLivre() {
- const clientId = '7497664436144745'
-
-    const redirectUri =
-      'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
-
-    const authUrl =
-      `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`
-
-    window.location.href = authUrl
+    alert('BOTAO FUNCIONANDO')
   }
 
   return (
