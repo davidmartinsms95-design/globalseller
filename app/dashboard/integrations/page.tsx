@@ -2,8 +2,7 @@
 
 export default function IntegrationsPage() {
   async function connectMercadoLivre() {
-    const clientId =
-      process.env.NEXT_PUBLIC_MERCADO_LIVRE_CLIENT_ID
+ const clientId = '7497664436144745'
 
     const redirectUri =
       'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
