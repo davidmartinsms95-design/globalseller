@@ -2,23 +2,11 @@
 
 export default function IntegrationsPage() {
   async function connectMercadoLivre() {
-  try {
-    const clientId = '7497664436144745'
+    alert('CLIQUE DETECTADO')
 
-    const redirectUri =
-      'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback'
-
-    const authUrl =
-      `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`
-
-    console.log(authUrl)
-
-    window.location.href = authUrl
-  } catch (error) {
-    console.error(error)
-    alert(String(error))
+    window.location.href =
+      'https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=7497664436144745&redirect_uri=https%3A%2F%2Fglobalseller-zhun.vercel.app%2Fapi%2Fintegrations%2Fmercadolivre%2Fcallback'
   }
-}
 
   return (
     <div>
