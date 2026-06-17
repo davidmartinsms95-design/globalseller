@@ -14,7 +14,7 @@ export async function GET(req: Request) {
 
     if (!session?.user?.email) {
       return NextResponse.redirect(
-        'https://globalseller.vercel.app/login'
+        'https://globalseller-zhun.vercel.app/login'
       )
     }
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
     if (!user) {
       return NextResponse.redirect(
-        'https://globalseller.vercel.app/login'
+        ''https://globalseller-zhun.vercel.app/login''
       )
     }
 
@@ -75,7 +75,7 @@ export async function GET(req: Request) {
           code,
 
           redirect_uri:
-  'https://globalseller.vercel.app/api/integrations/mercadolivre/callback',
+  'https://globalseller-zhun.vercel.app/api/integrations/mercadolivre/callback',
         }),
       }
     )
@@ -122,8 +122,8 @@ export async function GET(req: Request) {
     })
 
     return NextResponse.redirect(
-      'https://globalseller.vercel.app/dashboard/integrations'
-    )
+  'https://globalseller-zhun.vercel.app/login'
+)
   } catch (error) {
     console.log(error)
 
