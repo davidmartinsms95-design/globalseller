@@ -75,7 +75,7 @@ export async function GET(req: Request) {
           code,
 
           redirect_uri:
-            'https://globalseller.vercel.app/api/integrations/mercadolivre/callback',
+  'https://globalseller.vercel.app/api/integrations/mercadolivre/callback',
         }),
       }
     )
