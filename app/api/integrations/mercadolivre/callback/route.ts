@@ -17,7 +17,7 @@ if (!session?.user?.email) {
   console.log('SEM SESSAO')
 
   return NextResponse.redirect(
-    'https://globalseller-zhun.vercel.app/login'
+    'https://globalseller-zhun.vercel.app/dashboard/integrations'
   )
 }
     const session = await getServerSession(
