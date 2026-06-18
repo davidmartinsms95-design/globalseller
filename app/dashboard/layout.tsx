@@ -47,6 +47,12 @@ export default async function DashboardLayout({
           >
             Pedidos
           </a>
+          <a
+  href="/dashboard/integrations"
+  className="block rounded-xl px-4 py-3 transition hover:bg-zinc-900"
+>
+  Integrações
+</a>
 
           <a
             href="/dashboard/plans"
