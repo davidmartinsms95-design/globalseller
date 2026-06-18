@@ -4,10 +4,22 @@ import prisma from '../../../../../lib/prisma'
 
 import { getServerSession } from 'next-auth'
 
+
 import { authOptions } from '../../../auth/[...nextauth]/route'
 
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions)
+
+console.log('SESSION CALLBACK:', session)
+
+if (!session?.user?.email) {
+  console.log('SEM SESSAO')
+
+  return NextResponse.redirect(
+    'https://globalseller-zhun.vercel.app/login'
+  )
+}
     const session = await getServerSession(
       authOptions
     )
@@ -26,7 +38,7 @@ export async function GET(req: Request) {
 
     if (!user) {
       return NextResponse.redirect(
-        'https://globalseller-zhun.vercel.app/login'
+        'https://globalseller-zhun.vercel.app/dashboard/integrations'
       )
     }
 
