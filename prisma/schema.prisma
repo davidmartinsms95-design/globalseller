@@ -9,28 +9,71 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(cuid())
-  name        String
-  email       String    @unique
-  password    String
-  createdAt   DateTime  @default(now())
-  maxProducts Int       @default(5)
-  plan        String    @default("free")
-  orders      Order[]
-  products    Product[]
-  integrations Integration[]
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  password         String
+  createdAt        DateTime          @default(now())
+  maxProducts      Int               @default(5)
+  plan             String            @default("free")
+  role             String            @default("reseller")
+  integrations     Integration[]
+  orders           Order[]
+  products         Product[]
+  resellerProducts ResellerProduct[]
+}
+
+model Supplier {
+  id          String               @id @default(cuid())
+  companyName String
+  email       String               @unique
+  phone       String?
+  createdAt   DateTime             @default(now())
+  products    MarketplaceProduct[]
+}
+
+model MarketplaceProduct {
+  id               String            @id @default(cuid())
+  title            String
+  description      String?
+  costPrice        Float
+  suggestedPrice   Float
+  image            String?
+  stock            Int               @default(0)
+  supplierId       String
+  createdAt        DateTime          @default(now())
+  supplier         Supplier          @relation(fields: [supplierId], references: [id])
+  resellerProducts ResellerProduct[]
+}
+
+model ResellerProduct {
+  id                   String             @id @default(cuid())
+  resellerId           String
+  marketplaceProductId String
+  customPrice          Float?
+  active               Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  marketplaceProduct   MarketplaceProduct @relation(fields: [marketplaceProductId], references: [id])
+  reseller             User               @relation(fields: [resellerId], references: [id])
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  title     String
-  price     Float
-  category  String
-  image     String?
-  createdAt DateTime @default(now())
-  userId    String
-  orders    Order[]
-  user      User     @relation(fields: [userId], references: [id])
+  id            String   @id @default(cuid())
+  title         String
+  price         Float
+  category      String   @default("Mercado Livre")
+  image         String?
+  createdAt     DateTime @default(now())
+  userId        String
+  marketplace   String   @default("mercadolivre")
+  marketplaceId String?  @unique
+  permalink     String?
+  status        String?
+  stock         Int      @default(0)
+  description   String?
+  mlCategoryId  String?
+  orders        Order[]
+  user          User     @relation(fields: [userId], references: [id])
 }
 
 model Order {
@@ -46,18 +89,16 @@ model Order {
   product           Product  @relation(fields: [productId], references: [id])
   seller            User     @relation(fields: [sellerId], references: [id])
 }
+
 model Integration {
   id             String   @id @default(cuid())
   provider       String
   accessToken    String?
   refreshToken   String?
   externalUserId String?
-
-  userId String
-
-  user User @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
+  userId         String
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
 
   @@unique([provider, userId])
 }

@@ -6,3 +6,4 @@ export async function POST() {
     message: 'Atualização de estoque será implementada em breve',
   })
 }
+

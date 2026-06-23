@@ -1,21 +1,27 @@
 import { NextResponse } from 'next/server'
 import prisma from '../../../../../lib/prisma'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../../../auth/[...nextauth]/route'
+import { authOptions } from '../../../../../lib/auth'
 
 export async function GET(req: Request) {
+  console.log('🔥 CALLBACK EXECUTOU')
   try {
     const session = await getServerSession(authOptions)
 
     console.log('SESSION CALLBACK:', session)
 
     if (!session?.user?.email) {
-      console.log('SEM SESSAO')
+  console.log('SEM SESSAO NO CALLBACK')
 
-      return NextResponse.redirect(
-        'https://globalseller-zhun.vercel.app/dashboard/integrations'
-      )
+  return NextResponse.json(
+    {
+      error: 'SEM SESSAO NO CALLBACK',
+    },
+    {
+      status: 401,
     }
+  )
+}
 
     const user = await prisma.user.findUnique({
       where: {
@@ -113,3 +119,4 @@ export async function GET(req: Request) {
     )
   }
 }
+

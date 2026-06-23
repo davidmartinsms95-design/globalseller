@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]/route'
+import { authOptions } from '../../lib/auth'
 import { redirect } from 'next/navigation'
 
 export default async function DashboardLayout({
@@ -40,7 +40,12 @@ export default async function DashboardLayout({
           >
             Produtos
           </a>
-
+<a
+  href="/dashboard/marketplace"
+  className="block rounded-xl px-4 py-3 transition hover:bg-zinc-900"
+>
+  Marketplace
+</a>
           <a
             href="/dashboard/orders"
             className="block rounded-xl px-4 py-3 transition hover:bg-zinc-900"
@@ -100,3 +105,4 @@ export default async function DashboardLayout({
     </div>
   )
 }
+

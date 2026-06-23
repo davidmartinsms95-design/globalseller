@@ -4,10 +4,16 @@ import prisma from '../../../../../lib/prisma'
 
 import { getServerSession } from 'next-auth'
 
-import { authOptions } from '../../../auth/[...nextauth]/route'
+import { authOptions } from '../../../../../lib/auth'
 
 export async function GET() {
   try {
+    console.log('INICIOU ROTA PRODUTOS')
+    console.log(
+      'DATABASE_URL:',
+      process.env.DATABASE_URL?.slice(0, 50)
+    )
+
     const session = await getServerSession(
       authOptions
     )
@@ -23,6 +29,8 @@ export async function GET() {
       )
     }
 
+    console.log('ANTES DO PRISMA')
+
     const user = await prisma.user.findUnique({
       where: {
         email: session.user.email,
@@ -36,8 +44,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json(
         {
-          error:
-            'Usuário não encontrado',
+          error: 'Usuário não encontrado',
         },
         {
           status: 404,
@@ -63,7 +70,19 @@ export async function GET() {
         }
       )
     }
+console.log(
+  'USUARIO ML:',
+  integration.externalUserId
+)
 
+console.log(
+  'TOKEN ML:',
+  integration.accessToken?.slice(0, 20)
+)
+console.log(
+  'REFRESH TOKEN:',
+  integration.refreshToken?.slice(0, 20)
+)
     const response = await fetch(
       `https://api.mercadolibre.com/users/${integration.externalUserId}/items/search`,
       {
@@ -74,6 +93,11 @@ export async function GET() {
     )
 
     const data = await response.json()
+
+console.log(
+  'RESPOSTA ITEMS SEARCH:',
+  JSON.stringify(data, null, 2)
+)
 
     const itemIds = data.results || []
 
@@ -93,18 +117,12 @@ export async function GET() {
 
         return {
           id: item.id,
-
           title: item.title,
-
           price: item.price,
-
           thumbnail: item.thumbnail,
-
           available_quantity:
             item.available_quantity,
-
           status: item.status,
-
           permalink: item.permalink,
         }
       })
@@ -117,15 +135,16 @@ export async function GET() {
 
     return NextResponse.json(products)
   } catch (error) {
-  console.error('ERRO ML:', error)
+    console.error('ERRO ML:', error)
 
-  return NextResponse.json(
-    {
-      error: String(error),
-    },
-    {
-      status: 500,
-    }
-  )
+    return NextResponse.json(
+      {
+        error: String(error),
+      },
+      {
+        status: 500,
+      }
+    )
+  }
 }
-}
+

@@ -79,10 +79,10 @@ export async function DELETE(
     })
 
     await prisma.product.delete({
-      where: {
-        id,
-      },
-    })
+  where: {
+    id,
+  },
+})
 
     return NextResponse.json({
       success: true,

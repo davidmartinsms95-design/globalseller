@@ -32,7 +32,11 @@ export default function MercadoLivreOrdersPage() {
 
       const data = await response.json()
 
-      setOrders(data)
+      setOrders(
+  Array.isArray(data)
+    ? data
+    : []
+)
 
       setLoading(false)
     } catch (error) {
@@ -148,3 +152,4 @@ export default function MercadoLivreOrdersPage() {
     </div>
   )
 }
+
