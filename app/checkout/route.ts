@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server'
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!,
 })
-console.log('TOKEN:', process.env.MERCADO_PAGO_ACCESS_TOKEN)
 export async function POST(req: Request) {
   try {
     const body = await req.json()
