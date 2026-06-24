@@ -34,6 +34,9 @@ export async function POST() {
             'https://globalseller.vercel.app/dashboard/plans',
         },
 
+        notification_url:
+  'https://globalseller.vercel.app/api/subscription/webhook',
+  
         auto_return: 'approved',
       },
     })
