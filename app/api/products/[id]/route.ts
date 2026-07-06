@@ -8,11 +8,19 @@ export async function GET(
   try {
     const { id } = await context.params
 
-    const product = await prisma.product.findUnique({
-      where: {
-        id,
-      },
-    })
+    let product = await prisma.product.findUnique({
+  where: {
+    id,
+  },
+})
+
+if (!product) {
+  product = await prisma.product.findFirst({
+    where: {
+      resellerProductId: id,
+    },
+  })
+}
 
     return NextResponse.json(product)
   } catch (error: any) {

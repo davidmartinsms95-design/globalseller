@@ -1,15 +1,21 @@
-import { PrismaClient } from '@prisma/client'
 import { NextResponse } from 'next/server'
 
-const prisma = new PrismaClient()
+import prisma from '@/lib/prisma'
 
 export async function GET() {
-  const products = await prisma.product.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
 
-  return NextResponse.json(products)
+    return NextResponse.json(products)
+  } catch (error) {
+    console.error('[PRODUCTS-LIST]', error)
+
+    return NextResponse.json([], {
+      status: 500,
+    })
+  }
 }
-

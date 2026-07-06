@@ -110,6 +110,44 @@ export async function GET() {
     )
 
     const data = await response.json()
+    const itemIds = Array.isArray(data.response?.item)
+  ? data.response.item.map(
+      (item: any) => item.item_id
+    )
+  : []
+    if (Array.isArray(data.response?.item)) {
+  for (const item of data.response.item) {
+    await prisma.product.upsert({
+      where: {
+        marketplaceId: String(item.item_id),
+      },
+
+      update: {
+        title: item.item_name,
+        stock: item.stock ?? 0,
+        marketplace: 'shopee',
+      },
+
+      create: {
+        title: item.item_name,
+        price: 0,
+        stock: item.stock ?? 0,
+
+        marketplace: 'shopee',
+
+        marketplaceId: String(item.item_id),
+
+        userId: user.id,
+      },
+    })
+  }
+}
+if (itemIds.length > 0) {
+  console.log(
+    'Itens encontrados na Shopee:',
+    itemIds
+  )
+}
 
     console.log(
       'PRODUTOS SHOPEE:',

@@ -13,6 +13,10 @@ export const authOptions = {
       },
 
       async authorize(credentials: any) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email,
@@ -36,6 +40,7 @@ export const authOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role,
         }
       },
     }),
@@ -49,6 +54,7 @@ export const authOptions = {
     async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id
+        token.role = user.role
       }
 
       return token
@@ -57,6 +63,7 @@ export const authOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id
+        session.user.role = token.role
       }
 
       return session

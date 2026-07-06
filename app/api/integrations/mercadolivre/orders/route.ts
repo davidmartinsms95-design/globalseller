@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
 
-import prisma from '../../../../../lib/prisma'
-
-import { getServerSession } from 'next-auth'
-
-import { authOptions } from '../../../../../lib/auth'
+import prisma from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 export async function GET() {
   try {
-    const session = await getServerSession(
-      authOptions
-    )
+    const user = await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           error: 'Não autorizado',
@@ -23,36 +18,34 @@ export async function GET() {
       )
     }
 
-    const user = await prisma.user.findUnique({
+    const firstProduct = await prisma.product.findFirst({
       where: {
-        email: session.user.email,
+        userId: user.id,
       },
     })
 
-    if (!user) {
+    if (!firstProduct) {
       return NextResponse.json(
         {
-          error: 'Usuário não encontrado',
+          error: 'Nenhum produto encontrado para este usuário.',
         },
         {
-          status: 404,
+          status: 400,
         }
       )
     }
 
-    const integration =
-      await prisma.integration.findFirst({
-        where: {
-          userId: user.id,
-          provider: 'mercadolivre',
-        },
-      })
+    const integration = await prisma.integration.findFirst({
+      where: {
+        userId: user.id,
+        provider: 'mercadolivre',
+      },
+    })
 
     if (!integration) {
       return NextResponse.json(
         {
-          error:
-            'Mercado Livre não conectado',
+          error: 'Mercado Livre não conectado.',
         },
         {
           status: 404,
@@ -70,51 +63,79 @@ export async function GET() {
     )
 
     const data = await response.json()
-    console.log(
-  'RESPOSTA MERCADO LIVRE:',
-  JSON.stringify(data, null, 2)
-)
 
-    const orders = (
-      data.results || []
-    ).map((order: any) => ({
+    for (const order of data.results ?? []) {
+      await prisma.order.upsert({
+        where: {
+          externalOrderId_marketplace: {
+            externalOrderId: String(order.id),
+            marketplace: 'mercadolivre',
+          },
+        },
+
+        update: {
+          status: order.status,
+          amount: order.total_amount,
+          buyerName:
+            order.buyer?.nickname ??
+            order.buyer?.first_name ??
+            null,
+          customerEmail:
+            order.buyer?.email ??
+            null,
+          shippingStatus:
+            order.shipping?.status ??
+            'pending',
+          quantity:
+            order.order_items?.[0]?.quantity ??
+            1,
+        },
+
+        create: {
+          externalOrderId: String(order.id),
+          marketplace: 'mercadolivre',
+          sellerId: user.id,
+          productId: firstProduct.id,
+          amount: order.total_amount,
+          status: order.status,
+          buyerName:
+            order.buyer?.nickname ??
+            order.buyer?.first_name ??
+            null,
+          customerEmail:
+            order.buyer?.email ??
+            null,
+          shippingStatus:
+            order.shipping?.status ??
+            'pending',
+          quantity:
+            order.order_items?.[0]?.quantity ??
+            1,
+        },
+      })
+    }
+
+    const orders = (data.results ?? []).map((order: any) => ({
       id: order.id,
-
       status: order.status,
-
-      total_amount:
-        order.total_amount,
-
-      date_created:
-        order.date_created,
-
+      total_amount: order.total_amount,
+      date_created: order.date_created,
       buyer:
-        order.buyer?.nickname ||
-        order.buyer?.first_name ||
+        order.buyer?.nickname ??
+        order.buyer?.first_name ??
         'Cliente',
-
       shipping:
-        order.shipping?.status ||
+        order.shipping?.status ??
         'Sem envio',
     }))
 
-    console.log(
-      'PEDIDOS ML:',
-      orders
-    )
-
-    return NextResponse.json(
-      orders
-    )
+    return NextResponse.json(orders)
   } catch (error) {
-    console.error(
-      'ERRO PEDIDOS ML:',
-      error
-    )
+    console.error('[ML ORDERS]', error)
 
     return NextResponse.json(
       {
-        error: String(error),
+        error: 'Erro ao importar pedidos do Mercado Livre.',
       },
       {
         status: 500,
@@ -122,4 +143,3 @@ export async function GET() {
     )
   }
 }
-

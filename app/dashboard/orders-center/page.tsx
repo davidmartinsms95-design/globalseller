@@ -9,7 +9,13 @@ interface Order {
 
   status: string
 
+  buyerName?: string
+
   customerEmail?: string
+
+  shippingStatus?: string
+
+  quantity?: number
 
   marketplace?: string
 
@@ -160,11 +166,11 @@ export default function OrdersCenterPage() {
                   </div>
 
                   <p className="mt-3 text-zinc-400">
-                    Cliente:
-                    {' '}
-                    {order.customerEmail ||
-                      'Não informado'}
-                  </p>
+  Cliente:{' '}
+  {order.buyerName ||
+    order.customerEmail ||
+    'Não informado'}
+</p>
 
                   <p className="mt-2 text-sm text-zinc-500">
                     {order.createdAt
@@ -177,14 +183,14 @@ export default function OrdersCenterPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="rounded-2xl bg-black p-5">
                     <p className="text-sm text-zinc-400">
-                      Valor
+                      Quantidade
                     </p>
 
-                    <h3 className="mt-2 text-3xl font-bold text-green-500">
-                      R$ {order.amount}
+                    <h3 className="mt-2 text-3xl font-bold text-white">
+                      {order.quantity ?? 1}
                     </h3>
                   </div>
 

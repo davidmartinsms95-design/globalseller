@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "set NODE_OPTIONS=--dns-result-order=ipv4first && next dev --webpack",
     "build": "prisma generate && next build",
-    "start": "next start"
+    "start": "next start",
+    "worker": "tsx workers/marketplace-worker.ts",
+    "worker:dev": "tsx watch workers/marketplace-worker.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -26,7 +28,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-email": "^6.3.3",
-    "recharts": "^3.8.1",
+    "recharts": "^3.9.0",
     "resend": "^6.12.4",
     "uploadthing": "^7.7.4"
   },
@@ -38,6 +40,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

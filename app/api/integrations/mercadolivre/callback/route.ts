@@ -1,37 +1,20 @@
 import { NextResponse } from 'next/server'
-import prisma from '../../../../../lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../../../../../lib/auth'
+
+import prisma from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 export async function GET(req: Request) {
-  console.log('🔥 CALLBACK EXECUTOU')
   try {
-    const session = await getServerSession(authOptions)
-
-    console.log('SESSION CALLBACK:', session)
-
-    if (!session?.user?.email) {
-  console.log('SEM SESSAO NO CALLBACK')
-
-  return NextResponse.json(
-    {
-      error: 'SEM SESSAO NO CALLBACK',
-    },
-    {
-      status: 401,
-    }
-  )
-}
-
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-    })
+    const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.redirect(
-        'https://globalseller-zhun.vercel.app/dashboard/integrations'
+      return NextResponse.json(
+        {
+          error: 'Não autorizado',
+        },
+        {
+          status: 401,
+        }
       )
     }
 
@@ -49,8 +32,6 @@ export async function GET(req: Request) {
         }
       )
     }
-
-    console.log('CÓDIGO MERCADO LIVRE:', code)
 
     const response = await fetch(
       'https://api.mercadolibre.com/oauth/token',
@@ -75,10 +56,16 @@ export async function GET(req: Request) {
 
     const data = await response.json()
 
-    console.log(
-      'TOKEN MERCADO LIVRE:',
-      data
-    )
+    if (!data.access_token) {
+      return NextResponse.json(
+        {
+          error: 'Falha ao obter token do Mercado Livre',
+        },
+        {
+          status: 400,
+        }
+      )
+    }
 
     await prisma.integration.upsert({
       where: {
@@ -107,11 +94,11 @@ export async function GET(req: Request) {
       'https://globalseller-zhun.vercel.app/dashboard/integrations'
     )
   } catch (error) {
-    console.log(error)
+    console.error('[ML CALLBACK]', error)
 
     return NextResponse.json(
       {
-        error: 'Erro integração Mercado Livre',
+        error: 'Erro na integração com o Mercado Livre',
       },
       {
         status: 500,
@@ -119,4 +106,3 @@ export async function GET(req: Request) {
     )
   }
 }
-

@@ -96,7 +96,8 @@ export async function POST(req: Request) {
     const payload = {
       title: mp.title,
 
-      category_id: 'MLB31039',
+      category_id:
+  mp.categoryId ?? 'MLB31039',
 
       price:
         resellerProduct.customPrice ??
@@ -109,25 +110,25 @@ export async function POST(req: Request) {
 
       buying_mode: 'buy_it_now',
 
-      condition: 'new',
+      
 
       listing_type_id:
-        'gold_special',
+  mp.listingType ?? 'gold_special',
 
       pictures: mp.image
         ? [
             {
-              source: mp.image,
+       condition: 'new',       source: mp.image,
             },
           ]
         : [],
 
       attributes: [
         {
-          id: 'BRAND',
-          value_name:
-            'Tapeçaria Martins',
-        },
+  id: 'BRAND',
+  value_name:
+    mp.brand ?? 'Sem Marca',
+},
         {
           id: 'SHAPE',
           value_id: '1180866',
@@ -150,6 +151,21 @@ export async function POST(req: Request) {
       }
     )
 const data = await response.json()
+if (response.ok && mp.description) {
+  await fetch(
+    `https://api.mercadolibre.com/items/${data.id}/description`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${integration.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        plain_text: mp.description,
+      }),
+    }
+  )
+}
 
 console.log(
   'RESPOSTA ML:',
@@ -157,29 +173,24 @@ console.log(
 )
     if (response.ok) {
   await prisma.product.create({
-    data: {
-      title: mp.title,
-      price:
-        resellerProduct.customPrice ??
-        mp.suggestedPrice,
+  data: {
+    title: mp.title,
+    price: resellerProduct.customPrice ?? mp.suggestedPrice,
+    image: mp.image,
+    stock: mp.stock,
 
-      image: mp.image,
+    userId: user.id,
 
-      stock: mp.stock,
+    resellerProductId: resellerProduct.id,
 
-      userId: user.id,
+    marketplaceId: data.id,
+    permalink: data.permalink,
+    status: data.status,
 
-      marketplaceId: data.id,
-
-      permalink: data.permalink,
-
-      status: data.status,
-
-      marketplace: 'mercadolivre',
-
-      category: 'Mercado Livre',
-    },
-  })
+    marketplace: 'mercadolivre',
+    category: 'Mercado Livre',
+  },
+})
 }
 
     return NextResponse.json({

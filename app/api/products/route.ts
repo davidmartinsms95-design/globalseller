@@ -1,117 +1,61 @@
 import { NextResponse } from 'next/server'
-import prisma from '../../../lib/prisma'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../../../lib/auth'
+import prisma from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 export async function GET() {
   try {
-    const session =
-      await getServerSession(authOptions)
-
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        {
-          error: 'Não autorizado',
-        },
-        {
-          status: 401,
-        }
-      )
-    }
-
-    const user =
-      await prisma.user.findUnique({
-        where: {
-          email: session.user.email,
-        },
-      })
+    const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json(
-        {
-          error: 'Usuário não encontrado',
-        },
-        {
-          status: 404,
-        }
-      )
+      return NextResponse.json([], { status: 401 })
     }
 
-    const products =
-      await prisma.product.findMany({
-        where: {
-          userId: user.id,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
+    const products = await prisma.product.findMany({
+      where: {
+        userId: user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
 
     return NextResponse.json(products)
-  } catch (error: any) {
+  } catch (error) {
     console.error(error)
 
-    return NextResponse.json(
-      {
-        error: error.message,
-      },
-      {
-        status: 500,
-      }
-    )
+    return NextResponse.json([], { status: 500 })
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const session =
-      await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           error: 'Não autorizado',
         },
         {
           status: 401,
-        }
-      )
-    }
-
-    const user =
-      await prisma.user.findUnique({
-        where: {
-          email: session.user.email,
-        },
-      })
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          error: 'Usuário não encontrado',
-        },
-        {
-          status: 404,
         }
       )
     }
 
     const body = await req.json()
 
-    const product =
-      await prisma.product.create({
-        data: {
-          title: body.title,
-          description:
-            body.description,
-          price: Number(body.price),
-          category: body.category,
-          image: body.image,
-          stock: body.stock ?? 0,
-          userId: user.id,
-        },
-      })
+    const product = await prisma.product.create({
+      data: {
+        title: body.title,
+        description: body.description,
+        price: Number(body.price),
+        category: body.category,
+        image: body.image,
+        stock: body.stock ?? 0,
+        userId: user.id,
+      },
+    })
 
     return NextResponse.json(product)
   } catch (error: any) {
@@ -119,7 +63,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error: error.message,
+        error: error.message ?? 'Erro interno',
       },
       {
         status: 500,
@@ -127,4 +71,3 @@ export async function POST(req: Request) {
     )
   }
 }
-

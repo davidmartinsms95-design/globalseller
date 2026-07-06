@@ -29,15 +29,49 @@ export async function GET() {
       })
     }
 
-    const products =
-  await prisma.resellerProduct.findMany({
-    where: {
-      resellerId: user.id,
-    },
-    include: {
-      marketplaceProduct: true,
-    },
-  })
+    const resellerProducts =
+      await prisma.resellerProduct.findMany({
+        where: {
+          resellerId: user.id,
+        },
+        include: {
+          marketplaceProduct: {
+            include: {
+              supplier: true,
+            },
+          },
+        },
+      })
+
+    const products = await Promise.all(
+      resellerProducts.map(async (item) => {
+        const publishedProduct =
+          await prisma.product.findFirst({
+            where: {
+              resellerProductId: item.id,
+              userId: user.id,
+            },
+          })
+
+        return {
+          ...item,
+
+          productId: publishedProduct?.id ?? null,
+
+          marketplaceId:
+            publishedProduct?.marketplaceId ??
+            null,
+
+          permalink:
+            publishedProduct?.permalink ??
+            null,
+
+          status:
+            publishedProduct?.status ??
+            null,
+        }
+      })
+    )
 
     return NextResponse.json({
       step: 'OK',
@@ -46,10 +80,11 @@ export async function GET() {
       products,
     })
   } catch (error: any) {
+    console.error(error)
+
     return NextResponse.json({
       step: 'ERRO',
       error: error.message,
     })
   }
 }
-

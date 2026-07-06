@@ -16,12 +16,28 @@ export async function POST(req: Request) {
     */
 
     if (body.topic === 'orders_v2') {
-      console.log('Webhook Mercado Livre recebido', body)
+  await marketplaceQueue.add(
+  'order-created',
+  {
+    topic: body.topic,
+    resource: body.resource,
+    receivedAt: new Date(),
+  },
+  {
+    attempts: 5,
+    backoff: {
+      type: 'exponential',
+      delay: 3000,
+    },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  }
+)
 
-      console.log(
-        'JOB ENVIADO FILA: order-created'
-      )
-    }
+  console.log(
+    'JOB ENVIADO FILA: order-created'
+  )
+}
 
     /*
       Payments
@@ -29,15 +45,22 @@ export async function POST(req: Request) {
 
     if (body.topic === 'payments') {
       await marketplaceQueue.add(
-        'payment-approved',
-        {
-          topic: body.topic,
-
-          resource: body.resource,
-
-          receivedAt: new Date(),
-        }
-      )
+  'payment-approved',
+  {
+    topic: body.topic,
+    resource: body.resource,
+    receivedAt: new Date(),
+  },
+  {
+    attempts: 5,
+    backoff: {
+      type: 'exponential',
+      delay: 3000,
+    },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  }
+)
 
       console.log(
         'JOB ENVIADO FILA: payment-approved'
@@ -50,15 +73,22 @@ export async function POST(req: Request) {
 
     if (body.topic === 'shipments') {
       await marketplaceQueue.add(
-        'shipment-updated',
-        {
-          topic: body.topic,
-
-          resource: body.resource,
-
-          receivedAt: new Date(),
-        }
-      )
+  'shipment-updated',
+  {
+    topic: body.topic,
+    resource: body.resource,
+    receivedAt: new Date(),
+  },
+  {
+    attempts: 5,
+    backoff: {
+      type: 'exponential',
+      delay: 3000,
+    },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  }
+)
 
       console.log(
         'JOB ENVIADO FILA: shipment-updated'

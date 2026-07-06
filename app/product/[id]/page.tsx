@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client'
 import Link from 'next/link'
 
-const prisma = new PrismaClient()
+import prisma from '@/lib/prisma'
 
 export default async function ProductPage({
   params,
@@ -27,6 +26,7 @@ export default async function ProductPage({
   return (
     <div className="min-h-screen bg-black p-10 text-white">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 md:grid-cols-2">
+
         <div>
           <img
             src={product.image || '/placeholder.png'}
@@ -36,6 +36,7 @@ export default async function ProductPage({
         </div>
 
         <div>
+
           <p className="mb-3 text-yellow-400">
             {product.category}
           </p>
@@ -45,16 +46,18 @@ export default async function ProductPage({
           </h1>
 
           <p className="mb-8 text-4xl font-bold">
-            R$ {product.price}
+            R$ {product.price.toFixed(2)}
           </p>
 
           <Link
             href={`/checkout/${product.id}`}
-            className="rounded-2xl bg-yellow-400 px-8 py-4 font-bold text-black"
+            className="rounded-2xl bg-yellow-400 px-8 py-4 font-bold text-black transition hover:bg-yellow-300"
           >
             Comprar Agora
           </Link>
+
         </div>
+
       </div>
     </div>
   )

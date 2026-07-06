@@ -40,6 +40,24 @@ export async function POST(req: Request) {
       )
     }
 
+    const marketplaceProduct =
+      await prisma.marketplaceProduct.findUnique({
+        where: {
+          id: body.marketplaceProductId,
+        },
+      })
+
+    if (!marketplaceProduct) {
+      return NextResponse.json(
+        {
+          error: 'Produto não encontrado.',
+        },
+        {
+          status: 404,
+        }
+      )
+    }
+
     const exists =
       await prisma.resellerProduct.findFirst({
         where: {
@@ -57,7 +75,7 @@ export async function POST(req: Request) {
       })
     }
 
-    const product =
+    const resellerProduct =
       await prisma.resellerProduct.create({
         data: {
           resellerId: user.id,
@@ -66,8 +84,26 @@ export async function POST(req: Request) {
         },
       })
 
+    const product =
+      await prisma.product.create({
+        data: {
+          title: marketplaceProduct.title,
+          description:
+            marketplaceProduct.description,
+          image: marketplaceProduct.image,
+          price:
+            marketplaceProduct.suggestedPrice,
+          stock:
+            marketplaceProduct.stock,
+          userId: user.id,
+          resellerProductId:
+            resellerProduct.id,
+        },
+      })
+
     return NextResponse.json({
       success: true,
+      resellerProduct,
       product,
     })
   } catch (error) {
@@ -86,4 +122,3 @@ export async function POST(req: Request) {
     )
   }
 }
-

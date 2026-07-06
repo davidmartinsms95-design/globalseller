@@ -1,8 +1,11 @@
-import Redis from 'ioredis'
+import { Queue } from 'bullmq'
 
-export const redis = new Redis(
-  process.env.REDIS_URL!,
+export const marketplaceQueue = new Queue(
+  'marketplace-events',
   {
-    maxRetriesPerRequest: null,
+    connection: {
+      host: '127.0.0.1',
+      port: 6379,
+    },
   }
 )

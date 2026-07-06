@@ -1,32 +1,84 @@
 import { NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
+import crypto from 'crypto'
 
-export async function GET() {
+export async function POST(req: Request) {
   try {
-    const partnerId =
-      process.env.SHOPEE_PARTNER_ID
+    const { code, shopId, userId } = await req.json()
 
-    const redirect =
-      'https://globalseller.vercel.app/api/integrations/shopee/callback'
+    const partnerId = process.env.SHOPEE_PARTNER_ID!
+    const partnerKey = process.env.SHOPEE_PARTNER_KEY!
 
-    /*
-      URL OAuth Shopee
-    */
+    const timestamp = Math.floor(Date.now() / 1000)
+    const path = '/api/v2/auth/token/get'
 
-    const authUrl =
-      `https://partner.shopeemobile.com/api/v2/shop/auth_partner` +
-      `?partner_id=${partnerId}` +
-      `&redirect=${redirect}`
+    const baseString = `${partnerId}${path}${timestamp}`
 
-    return NextResponse.redirect(
-      authUrl
+    const sign = crypto
+      .createHmac('sha256', partnerKey)
+      .update(baseString)
+      .digest('hex')
+
+    const response = await fetch(
+      `https://partner.shopeemobile.com${path}?partner_id=${partnerId}&timestamp=${timestamp}&sign=${sign}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code,
+          shop_id: Number(shopId),
+          partner_id: Number(partnerId),
+        }),
+      }
     )
+
+    const data = await response.json()
+
+    if (!response.ok || !data.access_token) {
+      return NextResponse.json(
+        {
+          error: data.message ?? 'Erro ao obter token da Shopee',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
+
+    await prisma.integration.upsert({
+      where: {
+        provider_userId: {
+          provider: 'shopee',
+          userId,
+        },
+      },
+
+      update: {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        externalUserId: String(shopId),
+      },
+
+      create: {
+        provider: 'shopee',
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        externalUserId: String(shopId),
+        userId,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+    })
   } catch (error) {
-    console.log(error)
+    console.error(error)
 
     return NextResponse.json(
       {
-        error:
-          'Erro integração Shopee',
+        error: 'Erro ao gerar token da Shopee',
       },
       {
         status: 500,
@@ -34,4 +86,3 @@ export async function GET() {
     )
   }
 }
-

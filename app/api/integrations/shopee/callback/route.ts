@@ -60,34 +60,35 @@ export async function GET(req: Request) {
       shopId
     )
 
-    /*
-      Próximo passo:
-      trocar code por access_token
-    */
+    const tokenResponse = await fetch(
+  `${process.env.NEXTAUTH_URL}/api/integrations/shopee/token`,
+  {
+    method: 'POST',
 
-    await prisma.integration.upsert({
-      where: {
-        provider_userId: {
-          provider: 'shopee',
+    headers: {
+      'Content-Type': 'application/json',
+    },
 
-          userId: user.id,
-        },
-      },
+    body: JSON.stringify({
+      code,
+      shopId,
+      userId: user.id,
+    }),
+  }
+)
 
-      update: {
-        externalUserId: shopId,
-      },
+const tokenData = await tokenResponse.json()
 
-      create: {
-        provider: 'shopee',
-
-        accessToken: 'pending',
-
-        externalUserId: shopId,
-
-        userId: user.id,
-      },
-    })
+if (!tokenResponse.ok) {
+  return NextResponse.json(
+    {
+      error: tokenData.error ?? 'Erro ao gerar token da Shopee',
+    },
+    {
+      status: 500,
+    }
+  )
+}
 
     return NextResponse.redirect(
       'https://globalseller.vercel.app/dashboard/integrations'

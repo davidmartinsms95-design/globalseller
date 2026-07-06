@@ -3,17 +3,17 @@
 import { useEffect, useState } from 'react'
 
 interface Order {
-  id: number
+  id: string
+
+  amount: number
 
   status: string
 
-  total_amount: number
+  createdAt: string
 
-  date_created: string
+  customerEmail: string | null
 
-  buyer: string
-
-  shipping: string
+  marketplace: string
 }
 
 export default function MercadoLivreOrdersPage() {
@@ -27,8 +27,8 @@ export default function MercadoLivreOrdersPage() {
   async function loadOrders() {
     try {
       const response = await fetch(
-        '/api/integrations/mercadolivre/orders'
-      )
+  '/api/orders'
+)
 
       const data = await response.json()
 
@@ -85,18 +85,18 @@ export default function MercadoLivreOrdersPage() {
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-white">
-                    Pedido #{order.id}
+                    Pedido #{order.id.slice(0, 8)}
                   </h2>
 
                   <p className="mt-2 text-zinc-400">
                     Cliente:
                     {' '}
-                    {order.buyer}
+                    {order.customerEmail ?? 'Cliente'}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-yellow-400 px-4 py-2 font-bold text-black">
-                  Mercado Livre
+                  {order.marketplace}
                 </div>
               </div>
 
@@ -107,7 +107,7 @@ export default function MercadoLivreOrdersPage() {
                   </p>
 
                   <h3 className="mt-2 text-3xl font-bold text-green-500">
-                    R$ {order.total_amount}
+                    R$ {order.amount.toFixed(2)}
                   </h3>
                 </div>
 
@@ -127,7 +127,7 @@ export default function MercadoLivreOrdersPage() {
                   </p>
 
                   <h3 className="mt-2 text-xl font-bold text-orange-400">
-                    {order.shipping}
+                    Em processamento
                   </h3>
                 </div>
 
@@ -137,9 +137,7 @@ export default function MercadoLivreOrdersPage() {
                   </p>
 
                   <h3 className="mt-2 text-sm font-bold text-white">
-                    {new Date(
-                      order.date_created
-                    ).toLocaleDateString(
+                    {new Date(order.createdAt).toLocaleDateString(
                       'pt-BR'
                     )}
                   </h3>

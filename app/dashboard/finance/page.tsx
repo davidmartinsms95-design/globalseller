@@ -2,328 +2,108 @@
 
 import { useEffect, useState } from 'react'
 
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts'
+import FinanceForm from '@/components/dashboard/finance/FinanceForm'
+import FinanceSummary from '@/components/dashboard/finance/FinanceSummary'
+import FinanceTransactions from '@/components/dashboard/finance/FinanceTransactions'
+import FinanceChart from '@/components/dashboard/finance/FinanceChart'
+import FinanceFilters from '@/components/dashboard/finance/FinanceFilters'
+import FinanceTabs from '@/components/dashboard/finance/FinanceTabs'
+import { calculateFinanceSummary } from '@/lib/finance/summary'
 
-interface Order {
+interface FinanceTransaction {
   id: string
-
   amount: number
+  type: string
+  category: string
+  description?: string
+  createdAt: string
 
-  status: string
-
-  marketplace?: string
+  status?: string | null
+  dueDate?: string | null
+  paymentMethod?: string | null
 }
 
 export default function FinancePage() {
-  const [orders, setOrders] = useState<
-    Order[]
-  >([])
+  const [transactions, setTransactions] =
+  useState<FinanceTransaction[]>([])
 
-  const [loading, setLoading] =
-    useState(true)
+const [loading, setLoading] =
+  useState(true)
 
-  async function loadOrders() {
+const [filter, setFilter] =
+  useState('all')
+
+  async function loadFinance() {
     try {
-      const response = await fetch(
-        '/api/orders'
-      )
+      const response = await fetch('/api/finance')
 
       const data = await response.json()
 
-if (Array.isArray(data)) {
-  setOrders(data)
-} else {
-  console.log('ERRO ORDERS:', data)
-  setOrders([])
-}
-
-setLoading(false)
+      if (Array.isArray(data)) {
+        setTransactions(data)
+      } else {
+        console.error('Resposta inesperada da API:', data)
+        setTransactions([])
+      }
     } catch (error) {
-      console.log(error)
-
+      console.error(error)
+      setTransactions([])
+    } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadOrders()
+    loadFinance()
   }, [])
 
-  const approvedOrders =
-    orders.filter(
-      (order) =>
-        order.status === 'approved'
-    )
+  const summary =
+  calculateFinanceSummary(transactions)
 
-  const totalRevenue =
-    approvedOrders.reduce(
-      (acc, order) =>
-        acc + Number(order.amount),
-      0
-    )
-
-  const estimatedProfit =
-    totalRevenue * 0.72
-
-  const marketplaceRevenue =
-    approvedOrders
-      .filter(
-        (order) => order.marketplace
+const filteredTransactions =
+  filter === 'all'
+    ? transactions
+    : transactions.filter(
+        (t) => t.type === filter
       )
-      .reduce(
-        (acc, order) =>
-          acc + Number(order.amount),
-        0
-      )
-
-  const internalRevenue =
-    totalRevenue -
-    marketplaceRevenue
-
-  const financeChart = [
-    {
-      name: 'Seg',
-      valor: 1200,
-    },
-    {
-      name: 'Ter',
-      valor: 1800,
-    },
-    {
-      name: 'Qua',
-      valor: 2400,
-    },
-    {
-      name: 'Qui',
-      valor: 3200,
-    },
-    {
-      name: 'Sex',
-      valor: 4100,
-    },
-    {
-      name: 'Sáb',
-      valor: 2800,
-    },
-    {
-      name: 'Dom',
-      valor: 5300,
-    },
-  ]
-
-  const pieData = [
-    {
-      name: 'Marketplace',
-      value: marketplaceRevenue,
-    },
-    {
-      name: 'Interno',
-      value: internalRevenue,
-    },
-  ]
 
   return (
-    <div>
-      <div className="mb-12 flex items-center justify-between">
-        <div>
-          <h1 className="text-6xl font-bold text-white">
-            Financeiro
-          </h1>
+    <div className="space-y-8">
 
-          <p className="mt-4 text-xl text-zinc-400">
-            Controle financeiro da operação
-            multi-marketplace.
-          </p>
-        </div>
+      <FinanceForm
+        onCreated={loadFinance}
+      />
 
-        <div className="rounded-2xl bg-green-500 px-6 py-4 font-bold text-white">
-          ERP FINANCE
-        </div>
-      </div>
+      <div>
+  <h1 className="text-5xl font-bold text-white">
+    Financeiro
+  </h1>
 
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-          <p className="text-zinc-400">
-            Faturamento
-          </p>
+  <p className="mt-2 text-zinc-400">
+    Controle financeiro do GlobalSeller
+  </p>
+</div>
 
-          <h2 className="mt-4 text-5xl font-bold text-green-500">
-            R$ {totalRevenue.toFixed(2)}
-          </h2>
-        </div>
+<FinanceTabs />
 
-        <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-          <p className="text-zinc-400">
-            Lucro Estimado
-          </p>
+      <FinanceFilters
+  filter={filter}
+  setFilter={setFilter}
+/>
 
-          <h2 className="mt-4 text-5xl font-bold text-yellow-400">
-            R$ {estimatedProfit.toFixed(2)}
-          </h2>
-        </div>
+      <FinanceSummary
+  summary={summary}
+/>
 
-        <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-          <p className="text-zinc-400">
-            Receita Marketplace
-          </p>
+      <FinanceChart
+  transactions={transactions}
+/>
 
-          <h2 className="mt-4 text-5xl font-bold text-orange-500">
-            R$ {marketplaceRevenue.toFixed(2)}
-          </h2>
-        </div>
+      <FinanceTransactions
+  loading={loading}
+  transactions={filteredTransactions}
+/>
 
-        <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-          <p className="text-zinc-400">
-            Receita Interna
-          </p>
-
-          <h2 className="mt-4 text-5xl font-bold text-blue-500">
-            R$ {internalRevenue.toFixed(2)}
-          </h2>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-10">
-          <p className="text-xl text-zinc-400">
-            Carregando financeiro...
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-            <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-white">
-                  Receita Semanal
-                </h2>
-
-                <p className="mt-2 text-zinc-400">
-                  Performance financeira
-                </p>
-              </div>
-
-              <div className="h-96">
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <LineChart
-                    data={financeChart}
-                  >
-                    <XAxis dataKey="name" />
-
-                    <YAxis />
-
-                    <Tooltip />
-
-                    <Line
-                      type="monotone"
-                      dataKey="valor"
-                      stroke="#22c55e"
-                      strokeWidth={4}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-white">
-                  Receita por Canal
-                </h2>
-
-                <p className="mt-2 text-zinc-400">
-                  Marketplace vs interno
-                </p>
-              </div>
-
-              <div className="h-96">
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      nameKey="name"
-                      outerRadius={140}
-                    >
-                      <Cell fill="#f97316" />
-
-                      <Cell fill="#3b82f6" />
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-10 rounded-[32px] border border-zinc-800 bg-zinc-900 p-8">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-white">
-                Resumo Financeiro
-              </h2>
-
-              <p className="mt-2 text-zinc-400">
-                Indicadores da operação
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="rounded-2xl bg-black p-6">
-                <p className="text-zinc-400">
-                  Pedidos aprovados
-                </p>
-
-                <h3 className="mt-3 text-4xl font-bold text-white">
-                  {approvedOrders.length}
-                </h3>
-              </div>
-
-              <div className="rounded-2xl bg-black p-6">
-                <p className="text-zinc-400">
-                  Ticket médio
-                </p>
-
-                <h3 className="mt-3 text-4xl font-bold text-yellow-400">
-                  R$ {
-                    approvedOrders.length > 0
-                      ? (
-                          totalRevenue /
-                          approvedOrders.length
-                        ).toFixed(2)
-                      : '0'
-                  }
-                </h3>
-              </div>
-
-              <div className="rounded-2xl bg-black p-6">
-                <p className="text-zinc-400">
-                  Taxa estimada ERP
-                </p>
-
-                <h3 className="mt-3 text-4xl font-bold text-red-400">
-                  28%
-                </h3>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   )
 }
-
