@@ -44,3 +44,11 @@ next-env.d.ts
 
 .vercel
 .env*
+# Arquivos locais
+estrutura.txt
+orders-center.txt
+senha globalseller/Você já deu git push para o GitHub ou esse repositório ainda está apenas local?
+# Arquivos locais com credenciais
+senha globalseller/
+estrutura.txt
+orders-center.txt
