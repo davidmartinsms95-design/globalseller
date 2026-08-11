@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { marketplaceQueue } from '../../../../lib/queues'
+import { getMarketplaceQueue } from '../../../../lib/queues'
 
 export async function POST(req: Request) {
   try {
@@ -11,56 +11,63 @@ export async function POST(req: Request) {
       body
     )
 
+    const userId =
+      body.user_id
+        ? String(body.user_id)
+        : null
+
     /*
       Orders
     */
 
     if (body.topic === 'orders_v2') {
-  await marketplaceQueue.add(
-  'order-created',
-  {
-    topic: body.topic,
-    resource: body.resource,
-    receivedAt: new Date(),
-  },
-  {
-    attempts: 5,
-    backoff: {
-      type: 'exponential',
-      delay: 3000,
-    },
-    removeOnComplete: 100,
-    removeOnFail: 500,
-  }
-)
+      await getMarketplaceQueue().add(
+        'order-created',
+        {
+          topic: body.topic,
+          resource: body.resource,
+          userId,
+          receivedAt: new Date(),
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+            delay: 3000,
+          },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        }
+      )
 
-  console.log(
-    'JOB ENVIADO FILA: order-created'
-  )
-}
+      console.log(
+        'JOB ENVIADO FILA: order-created'
+      )
+    }
 
     /*
       Payments
     */
 
     if (body.topic === 'payments') {
-      await marketplaceQueue.add(
-  'payment-approved',
-  {
-    topic: body.topic,
-    resource: body.resource,
-    receivedAt: new Date(),
-  },
-  {
-    attempts: 5,
-    backoff: {
-      type: 'exponential',
-      delay: 3000,
-    },
-    removeOnComplete: 100,
-    removeOnFail: 500,
-  }
-)
+      await getMarketplaceQueue().add(
+        'payment-approved',
+        {
+          topic: body.topic,
+          resource: body.resource,
+          userId,
+          receivedAt: new Date(),
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+            delay: 3000,
+          },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        }
+      )
 
       console.log(
         'JOB ENVIADO FILA: payment-approved'
@@ -72,23 +79,24 @@ export async function POST(req: Request) {
     */
 
     if (body.topic === 'shipments') {
-      await marketplaceQueue.add(
-  'shipment-updated',
-  {
-    topic: body.topic,
-    resource: body.resource,
-    receivedAt: new Date(),
-  },
-  {
-    attempts: 5,
-    backoff: {
-      type: 'exponential',
-      delay: 3000,
-    },
-    removeOnComplete: 100,
-    removeOnFail: 500,
-  }
-)
+      await getMarketplaceQueue().add(
+        'shipment-updated',
+        {
+          topic: body.topic,
+          resource: body.resource,
+          userId,
+          receivedAt: new Date(),
+        },
+        {
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+            delay: 3000,
+          },
+          removeOnComplete: 100,
+          removeOnFail: 500,
+        }
+      )
 
       console.log(
         'JOB ENVIADO FILA: shipment-updated'
@@ -112,4 +120,3 @@ export async function POST(req: Request) {
     )
   }
 }
-
