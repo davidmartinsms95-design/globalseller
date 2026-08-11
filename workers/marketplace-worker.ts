@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq'
 
+import { getRedisConnection } from '@/lib/queues'
 import { updateMercadoLivreStock } from '@/lib/mercadolivre/updateStock'
 import { updateMercadoLivrePrice } from '@/lib/mercadolivre/updatePrice'
 import { updateMercadoLivreStatus } from '@/lib/mercadolivre/updateStatus'
@@ -75,11 +76,8 @@ export const marketplaceWorker = new Worker(
   },
 
   {
-    connection: {
-      host: process.env.REDIS_HOST || '127.0.0.1',
-      port: Number(process.env.REDIS_PORT || 6379),
-    },
-  }
+  connection: getRedisConnection(),
+}
 )
 
 marketplaceWorker.on(
