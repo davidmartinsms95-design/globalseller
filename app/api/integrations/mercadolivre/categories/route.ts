@@ -4,6 +4,9 @@ import prisma from '../../../../../lib/prisma'
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../../../lib/auth'
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 
 export async function POST(
   req: Request
@@ -64,21 +67,18 @@ export async function POST(
     }
 
     const { query } =
-      await req.json()
+  await req.json()
 
-    const response = await fetch(
-      `https://api.mercadolibre.com/sites/MLB/domain_discovery/search?limit=10&q=${encodeURIComponent(
-        query
-      )}`,
-      {
-        headers: {
-          Authorization: `Bearer ${integration.accessToken}`,
-        },
-      }
-    )
+const provider =
+  marketplaceManager.getProvider(
+    'mercadolivre',
+  )
 
-    const data =
-      await response.json()
+const data =
+  await provider.getCategories(
+    user.id,
+    query,
+  )
 
     return NextResponse.json({
       success: true,

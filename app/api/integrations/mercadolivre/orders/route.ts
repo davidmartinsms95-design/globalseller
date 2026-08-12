@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/getCurrentUser'
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 
 export async function GET() {
   try {
@@ -18,34 +21,19 @@ export async function GET() {
       )
     }
 
-    const firstProduct = await prisma.product.findFirst({
-      where: {
-        userId: user.id,
-      },
-    })
-
-    if (!firstProduct) {
-      return NextResponse.json(
-        {
-          error: 'Nenhum produto encontrado para este usuário.',
+    const integration =
+      await prisma.integration.findFirst({
+        where: {
+          userId: user.id,
+          provider: 'mercadolivre',
         },
-        {
-          status: 400,
-        }
-      )
-    }
-
-    const integration = await prisma.integration.findFirst({
-      where: {
-        userId: user.id,
-        provider: 'mercadolivre',
-      },
-    })
+      })
 
     if (!integration) {
       return NextResponse.json(
         {
-          error: 'Mercado Livre não conectado.',
+          error:
+            'Mercado Livre não conectado.',
         },
         {
           status: 404,
@@ -53,89 +41,103 @@ export async function GET() {
       )
     }
 
-    const response = await fetch(
-      `https://api.mercadolibre.com/orders/search?seller=${integration.externalUserId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${integration.accessToken}`,
-        },
-      }
+    const provider =
+      marketplaceManager.getProvider(
+        'mercadolivre',
+      )
+
+    const orders =
+      await provider.getOrders(
+        user.id,
+      )
+
+    for (const order of orders) {
+  const product =
+    order.marketplaceProductId
+      ? await prisma.product.findFirst({
+          where: {
+            marketplaceId:
+              order.marketplaceProductId,
+            userId: user.id,
+          },
+        })
+      : null
+
+  if (!product) {
+    console.warn(
+      `[ML ORDERS] Produto não encontrado para o pedido ${order.id}. marketplaceProductId: ${order.marketplaceProductId ?? 'null'}`
     )
 
-    const data = await response.json()
+    continue
+  }
 
-    for (const order of data.results ?? []) {
-      await prisma.order.upsert({
+  await prisma.order.upsert({
         where: {
           externalOrderId_marketplace: {
-            externalOrderId: String(order.id),
-            marketplace: 'mercadolivre',
+            externalOrderId:
+              String(order.id),
+            marketplace:
+              'mercadolivre',
           },
         },
 
         update: {
-          status: order.status,
-          amount: order.total_amount,
-          buyerName:
-            order.buyer?.nickname ??
-            order.buyer?.first_name ??
-            null,
-          customerEmail:
-            order.buyer?.email ??
-            null,
-          shippingStatus:
-            order.shipping?.status ??
-            'pending',
-          quantity:
-            order.order_items?.[0]?.quantity ??
-            1,
-        },
+  status: order.status,
+  amount: order.total,
+  buyerName:
+    order.buyerName ?? null,
+  customerEmail:
+    order.customerEmail ?? null,
+  shippingStatus:
+    order.shippingStatus ?? 'pending',
+  quantity:
+    order.quantity ?? 1,
+},
 
         create: {
-          externalOrderId: String(order.id),
-          marketplace: 'mercadolivre',
-          sellerId: user.id,
-          productId: firstProduct.id,
-          amount: order.total_amount,
-          status: order.status,
-          buyerName:
-            order.buyer?.nickname ??
-            order.buyer?.first_name ??
-            null,
-          customerEmail:
-            order.buyer?.email ??
-            null,
-          shippingStatus:
-            order.shipping?.status ??
-            'pending',
-          quantity:
-            order.order_items?.[0]?.quantity ??
-            1,
-        },
+  externalOrderId:
+    String(order.id),
+
+  marketplace:
+    'mercadolivre',
+
+  sellerId: user.id,
+
+  productId:
+  product.id,
+
+  amount: order.total,
+
+  status: order.status,
+
+  buyerName:
+    order.buyerName ?? null,
+
+  customerEmail:
+    order.customerEmail ?? null,
+
+  shippingStatus:
+    order.shippingStatus ?? 'pending',
+
+  quantity:
+    order.quantity ?? 1,
+},
       })
     }
 
-    const orders = (data.results ?? []).map((order: any) => ({
-      id: order.id,
-      status: order.status,
-      total_amount: order.total_amount,
-      date_created: order.date_created,
-      buyer:
-        order.buyer?.nickname ??
-        order.buyer?.first_name ??
-        'Cliente',
-      shipping:
-        order.shipping?.status ??
-        'Sem envio',
-    }))
-
-    return NextResponse.json(orders)
+    return NextResponse.json(
+      orders,
+    )
   } catch (error) {
-    console.error('[ML ORDERS]', error)
+    console.error(
+      '[ML ORDERS]',
+      error
+    )
 
     return NextResponse.json(
       {
-        error: 'Erro ao importar pedidos do Mercado Livre.',
+        error:
+          'Erro ao importar pedidos do Mercado Livre.',
       },
       {
         status: 500,

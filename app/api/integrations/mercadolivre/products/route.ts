@@ -46,8 +46,20 @@ export async function GET() {
         user.id,
       )
 
+    const responseProducts =
+      products.map((product) => ({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        thumbnail: product.image,
+        available_quantity:
+          product.stock,
+        status: product.status,
+        permalink: product.permalink,
+      }))
+
     return NextResponse.json(
-      products,
+      responseProducts,
     )
   } catch (error) {
     console.error(
