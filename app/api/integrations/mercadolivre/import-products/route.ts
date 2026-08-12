@@ -4,8 +4,14 @@ import prisma from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/getCurrentUser'
 import { createSystemLog } from '@/lib/systemLog'
 
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
+
 export async function POST() {
-  let user: Awaited<ReturnType<typeof getCurrentUser>> = null
+  let user: Awaited<
+    ReturnType<typeof getCurrentUser>
+  > = null
 
   try {
     user = await getCurrentUser()
@@ -17,25 +23,27 @@ export async function POST() {
         },
         {
           status: 401,
-        }
+        },
       )
     }
 
-    const integration = await prisma.integration.findFirst({
-      where: {
-        userId: user.id,
-        provider: 'mercadolivre',
-      },
-    })
+    const integration =
+      await prisma.integration.findFirst({
+        where: {
+          userId: user.id,
+          provider: 'mercadolivre',
+        },
+      })
 
     if (!integration) {
       return NextResponse.json(
         {
-          error: 'Mercado Livre não conectado',
+          error:
+            'Mercado Livre não conectado',
         },
         {
           status: 404,
-        }
+        },
       )
     }
 
@@ -43,110 +51,130 @@ export async function POST() {
       service: 'Mercado Livre',
       event: 'Importação iniciada',
       status: 'info',
-      message: 'Iniciando importação de produtos.',
+      message:
+        'Iniciando importação de produtos.',
       payload: {
         userId: user.id,
-        externalUserId: integration.externalUserId,
+        externalUserId:
+          integration.externalUserId,
       },
     })
 
-    const response = await fetch(
-      `https://api.mercadolibre.com/users/${integration.externalUserId}/items/search`,
-      {
-        headers: {
-          Authorization: `Bearer ${integration.accessToken}`,
-        },
-      }
-    )
+    const provider =
+      marketplaceManager.getProvider(
+        'mercadolivre',
+      )
 
-    if (!response.ok) {
+    let products
+
+    try {
+      products =
+        await provider.getProducts(
+          user.id,
+        )
+    } catch (error) {
       await createSystemLog({
         service: 'Mercado Livre',
         event: 'Erro na importação',
         status: 'error',
-        message: 'Falha ao consultar produtos no Mercado Livre.',
+        message:
+          'Falha ao consultar produtos no Mercado Livre.',
         payload: {
           userId: user.id,
-          status: response.status,
+          error: String(error),
         },
       })
 
       return NextResponse.json(
         {
-          error: 'Erro ao consultar Mercado Livre.',
+          error:
+            'Erro ao consultar Mercado Livre.',
         },
         {
-          status: response.status,
-        }
+          status: 500,
+        },
       )
     }
 
-    const data = await response.json()
-
-    const itemIds = data.results ?? []
-
     let imported = 0
 
-    for (const itemId of itemIds) {
-      const itemResponse = await fetch(
-        `https://api.mercadolibre.com/items/${itemId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${integration.accessToken}`,
+    for (const product of products) {
+      try {
+        await prisma.product.upsert({
+          where: {
+            marketplaceId:
+              product.id,
           },
-        }
-      )
 
-      if (!itemResponse.ok) {
+          update: {
+            title:
+              product.title,
+
+            price:
+              product.price,
+
+            stock:
+              product.stock,
+
+            status:
+              product.status,
+
+            permalink:
+              product.permalink,
+
+            image:
+              product.image
+                ? product.image.replace(
+                    'http://',
+                    'https://',
+                  )
+                : null,
+          },
+
+          create: {
+            marketplaceId:
+              product.id,
+
+            title:
+              product.title,
+
+            price:
+              product.price,
+
+            stock:
+              product.stock,
+
+            status:
+              product.status,
+
+            permalink:
+              product.permalink,
+
+            image:
+              product.image
+                ? product.image.replace(
+                    'http://',
+                    'https://',
+                  )
+                : null,
+
+            userId:
+              user.id,
+          },
+        })
+
+        imported++
+      } catch {
         continue
       }
-
-      const item = await itemResponse.json()
-
-      await prisma.product.upsert({
-        where: {
-          marketplaceId: item.id,
-        },
-
-        update: {
-          title: item.title,
-          price: item.price,
-          stock: item.available_quantity,
-          status: item.status,
-          permalink: item.permalink,
-          image: item.thumbnail
-            ? item.thumbnail.replace(
-                'http://',
-                'https://'
-              )
-            : null,
-        },
-
-        create: {
-          marketplaceId: item.id,
-          title: item.title,
-          price: item.price,
-          stock: item.available_quantity,
-          status: item.status,
-          permalink: item.permalink,
-          image: item.thumbnail
-            ? item.thumbnail.replace(
-                'http://',
-                'https://'
-              )
-            : null,
-          userId: user.id,
-        },
-      })
-
-      imported++
     }
 
     await createSystemLog({
       service: 'Mercado Livre',
       event: 'Importação concluída',
       status: 'success',
-      message: `${imported} produto(s) importado(s).`,
+      message:
+        `${imported} produto(s) importado(s).`,
       payload: {
         imported,
         userId: user.id,
@@ -158,7 +186,10 @@ export async function POST() {
       imported,
     })
   } catch (error) {
-    console.error('[ML IMPORT]', error)
+    console.error(
+      '[ML IMPORT]',
+      error,
+    )
 
     await createSystemLog({
       service: 'Mercado Livre',
@@ -166,17 +197,19 @@ export async function POST() {
       status: 'error',
       message: String(error),
       payload: {
-        userId: user?.id ?? null,
+        userId:
+          user?.id ?? null,
       },
     })
 
     return NextResponse.json(
       {
-        error: 'Erro ao importar produtos do Mercado Livre.',
+        error:
+          'Erro ao importar produtos do Mercado Livre.',
       },
       {
         status: 500,
-      }
+      },
     )
   }
 }

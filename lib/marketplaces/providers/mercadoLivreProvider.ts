@@ -43,17 +43,36 @@ async getProducts(
     data.results ?? []
 
   const products =
+  (
     await Promise.all(
       itemIds.map(
         async (
           itemId: string,
-        ) =>
-          mercadoLivreClient.get(
-            userId,
-            `/items/${itemId}`,
-          ),
+        ) => {
+          try {
+            return await mercadoLivreClient.get(
+              userId,
+              `/items/${itemId}`,
+            )
+          } catch (error) {
+            console.error(
+              '[ML PRODUCT]',
+              itemId,
+              error,
+            )
+
+            return null
+          }
+        },
       ),
     )
+  ).filter(
+    (
+      item,
+    ): item is NonNullable<
+      typeof item
+    > => item !== null,
+  )
 
   return products.map(
     (item) => ({
