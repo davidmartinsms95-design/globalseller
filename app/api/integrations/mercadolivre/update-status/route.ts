@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import {
-  updateMercadoLivreStatus,
-} from '@/lib/mercadolivre/updateStatus'
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 
 export async function POST(
   request: NextRequest
@@ -28,10 +28,15 @@ export async function POST(
       )
     }
 
-    await updateMercadoLivreStatus(
-      productId,
-      status
-    )
+    const provider =
+  marketplaceManager.getProvider(
+    'mercadolivre',
+  )
+
+await provider.updateStatus(
+  productId,
+  status,
+)
 
     return NextResponse.json({
       success: true,
