@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
 import {
-  updateMercadoLivrePrice,
-} from '@/lib/mercadolivre/updatePrice'
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 
 export async function POST(
   request: NextRequest
@@ -41,10 +41,15 @@ export async function POST(
       },
     })
 
-    await updateMercadoLivrePrice(
-      productId,
-      Number(price)
-    )
+    const provider =
+  marketplaceManager.getProvider(
+    'mercadolivre',
+  )
+
+await provider.updatePrice(
+  productId,
+  Number(price),
+)
 
     return NextResponse.json({
       success: true,
