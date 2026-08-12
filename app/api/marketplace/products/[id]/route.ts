@@ -1,8 +1,9 @@
-import { updateMercadoLivrePrice } from '@/lib/mercadolivre/updatePrice'
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 import { NextRequest, NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
-import { updateMercadoLivreStock } from '@/lib/mercadolivre/updateStock'
 
 interface RouteContext {
   params: Promise<{
@@ -65,15 +66,20 @@ export async function PUT(
 
 if (product.marketplaceId) {
   try {
-    await updateMercadoLivreStock(
+    const provider =
+      marketplaceManager.getProvider(
+        'mercadolivre',
+      )
+
+    await provider.updateStock(
       product.id,
-      marketplaceProduct.stock
+      marketplaceProduct.stock,
     )
 
     if (reseller.customPrice == null) {
-      await updateMercadoLivrePrice(
+      await provider.updatePrice(
         product.id,
-        marketplaceProduct.suggestedPrice
+        marketplaceProduct.suggestedPrice,
       )
     }
   } catch (error) {
