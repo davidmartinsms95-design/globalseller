@@ -29,6 +29,11 @@ export interface MarketplaceProvider {
   userId: string,
 ): Promise<MarketplaceOrder[]>
 
+ getCategories(
+    userId: string,
+    query: string,
+  ): Promise<unknown>
+
   updatePrice(
     productId: string,
     price: number,

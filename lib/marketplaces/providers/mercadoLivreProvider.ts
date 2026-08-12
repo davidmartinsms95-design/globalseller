@@ -157,6 +157,20 @@ async getProducts(
 )
 }
 
+  async getCategories(
+    userId: string,
+    query: string,
+  ): Promise<unknown> {
+    return mercadoLivreClient.get(
+      userId,
+      '/sites/MLB/domain_discovery/search',
+      {
+        limit: 10,
+        q: query,
+      },
+    )
+  }
+
   async updatePrice(): Promise<void> {
     throw new Error(
       'Not implemented.',
