@@ -1,9 +1,9 @@
 import { Worker } from 'bullmq'
 
 import { getRedisConnection } from '@/lib/queues'
-import { updateMercadoLivreStock } from '@/lib/mercadolivre/updateStock'
-import { updateMercadoLivrePrice } from '@/lib/mercadolivre/updatePrice'
-import { updateMercadoLivreStatus } from '@/lib/mercadolivre/updateStatus'
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 import { processOrder } from '@/lib/mercadolivre/processors/processOrder'
 import { processPayment } from '@/lib/mercadolivre/processors/processPayment'
 import { processShipment } from '@/lib/mercadolivre/processors/processShipment'
@@ -26,23 +26,28 @@ export const marketplaceWorker = new Worker(
       payload: job.data,
     })
 
+    const provider =
+      marketplaceManager.getProvider(
+        'mercadolivre',
+      )
+
     switch (job.name) {
       case 'update-stock':
-        await updateMercadoLivreStock(
+        await provider.updateStock(
           job.data.productId,
           job.data.quantity
         )
         break
 
       case 'update-price':
-        await updateMercadoLivrePrice(
+        await provider.updatePrice(
           job.data.productId,
           job.data.price
         )
         break
 
       case 'update-status':
-        await updateMercadoLivreStatus(
+        await provider.updateStatus(
           job.data.productId,
           job.data.status
         )
