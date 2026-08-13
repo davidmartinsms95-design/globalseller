@@ -1,7 +1,8 @@
 import prisma from '@/lib/prisma'
 
-import { updateMercadoLivreStock } from '@/lib/mercadolivre/updateStock'
-import { updateMercadoLivreStatus } from '@/lib/mercadolivre/updateStatus'
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 import { createSystemLog } from '@/lib/systemLog'
 
 export async function syncMarketplaces(
@@ -33,8 +34,13 @@ export async function syncMarketplaces(
         },
       })
 
+    const provider =
+      marketplaceManager.getProvider(
+        'mercadolivre',
+      )
+
     for (const product of products) {
-      await updateMercadoLivreStock(
+      await provider.updateStock(
         product.id,
         product.stock
       )
@@ -44,7 +50,7 @@ export async function syncMarketplaces(
         product.status === 'paused' ||
         product.status === 'closed'
       ) {
-        await updateMercadoLivreStatus(
+        await provider.updateStatus(
           product.id,
           product.status
         )
