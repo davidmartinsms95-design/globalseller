@@ -171,15 +171,68 @@ async getProducts(
     )
   }
 
-  async updatePrice(): Promise<void> {
-    throw new Error(
-      'Not implemented.',
+  async updatePrice(
+    productId: string,
+    price: number,
+  ): Promise<void> {
+    const product =
+      await prisma.product.findUnique({
+        where: {
+          id: productId,
+        },
+      })
+
+    if (!product) {
+      throw new Error(
+        'Produto não encontrado.',
+      )
+    }
+
+    if (!product.marketplaceId) {
+      throw new Error(
+        'Produto ainda não foi publicado.',
+      )
+    }
+
+    await mercadoLivreClient.put(
+      product.userId,
+      `/items/${product.marketplaceId}`,
+      {
+        price,
+      },
     )
   }
 
-  async updateStock(): Promise<void> {
-    throw new Error(
-      'Not implemented.',
+  async updateStock(
+    productId: string,
+    quantity: number,
+  ): Promise<void> {
+    const product =
+      await prisma.product.findUnique({
+        where: {
+          id: productId,
+        },
+      })
+
+    if (!product) {
+      throw new Error(
+        'Produto não encontrado.',
+      )
+    }
+
+    if (!product.marketplaceId) {
+      throw new Error(
+        'Produto não possui Marketplace ID.',
+      )
+    }
+
+    await mercadoLivreClient.put(
+      product.userId,
+      `/items/${product.marketplaceId}`,
+      {
+        available_quantity:
+          quantity,
+      },
     )
   }
 
