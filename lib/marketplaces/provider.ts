@@ -34,6 +34,11 @@ export interface MarketplaceProvider {
     query: string,
   ): Promise<unknown>
 
+  publishProduct(
+    userId: string,
+    productId: string,
+  ): Promise<unknown>
+
   updatePrice(
     productId: string,
     price: number,

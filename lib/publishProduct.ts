@@ -1,5 +1,7 @@
 import prisma from './prisma'
-import { publishOnMercadoLivre } from '@/lib/mercadolivre/publishProduct'
+import {
+  marketplaceManager,
+} from '@/lib/marketplaces/manager'
 
 export async function publishProduct(
   userId: string,
@@ -37,10 +39,15 @@ export async function publishProduct(
     (i) => i.provider === 'mercadolivre'
   )
 ) {
-  await publishOnMercadoLivre(
-    userId,
-    productId
+  const provider =
+  marketplaceManager.getProvider(
+    'mercadolivre',
   )
+
+await provider.publishProduct(
+  userId,
+  productId,
+)
 
   result.mercadolivre = true
 
