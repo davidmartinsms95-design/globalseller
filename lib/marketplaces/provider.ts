@@ -39,6 +39,11 @@ export interface MarketplaceProvider {
     productId: string,
   ): Promise<unknown>
 
+    publishResellerProduct(
+    userId: string,
+    resellerProductId: string,
+  ): Promise<unknown>
+
   updatePrice(
     productId: string,
     price: number,
