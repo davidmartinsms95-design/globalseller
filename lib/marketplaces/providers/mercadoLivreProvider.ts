@@ -236,9 +236,44 @@ async getProducts(
     )
   }
 
-  async updateStatus(): Promise<void> {
-    throw new Error(
-      'Not implemented.',
+  async updateStatus(
+    productId: string,
+    status: 'active' | 'paused' | 'closed',
+  ): Promise<void> {
+    const product =
+      await prisma.product.findUnique({
+        where: {
+          id: productId,
+        },
+      })
+
+    if (!product) {
+      throw new Error(
+        'Produto não encontrado.',
+      )
+    }
+
+    if (!product.marketplaceId) {
+      throw new Error(
+        'Produto ainda não foi publicado.',
+      )
+    }
+
+    await mercadoLivreClient.put(
+      product.userId,
+      `/items/${product.marketplaceId}`,
+      {
+        status,
+      },
     )
+
+    await prisma.product.update({
+      where: {
+        id: product.id,
+      },
+      data: {
+        status,
+      },
+    })
   }
 }
