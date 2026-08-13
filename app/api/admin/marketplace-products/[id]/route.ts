@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { updateMercadoLivreStock } from '@/lib/mercadolivre/updateStock'
+
 interface RouteContext {
   params: Promise<{
     id: string
