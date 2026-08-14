@@ -1,94 +1,280 @@
 import prisma from '@/lib/prisma'
-import { mercadoLivreRequest } from '@/lib/mercadolivre/api'
+import { mercadoLivreClient } from '@/lib/mercadolivre/mercadoLivreClient'
 import { createSystemLog } from '@/lib/systemLog'
 
-export async function processOrder(data: any) {
+interface ProcessOrderData {
+  topic: string
+  resource: string
+  userId: string | null
+  receivedAt: Date
+}
+
+export async function processOrder(
+  data: ProcessOrderData
+) {
   try {
-    console.log('📦 Processando pedido', data)
+    console.log(
+      '📦 Processando pedido Mercado Livre:',
+      data
+    )
 
     if (!data.resource) {
-      console.log('Webhook sem resource.')
+      console.log(
+        'Webhook sem resource.'
+      )
 
       await createSystemLog({
         service: 'Mercado Livre',
         event: 'Webhook inválido',
         status: 'warning',
-        message: 'Webhook recebido sem resource.',
-        payload: data,
+        message:
+          'Webhook recebido sem resource.',
+        payload: {
+          topic: data.topic,
+          resource: data.resource,
+          userId: data.userId,
+          receivedAt:
+            data.receivedAt.toISOString(),
+        },
       })
 
       return
+    }
+
+    if (!data.userId) {
+      throw new Error(
+        'Webhook do Mercado Livre sem userId.'
+      )
     }
 
     const integration =
       await prisma.integration.findFirst({
         where: {
           provider: 'mercadolivre',
+          externalUserId: data.userId,
         },
       })
 
-    if (!integration?.accessToken) {
+    if (!integration) {
       throw new Error(
-        'Integração do Mercado Livre não encontrada.'
+        `Integração do Mercado Livre não encontrada para o usuário externo ${data.userId}.`
       )
     }
 
-    const order = await mercadoLivreRequest(
-      data.resource,
-      integration.accessToken
-    )
+    const globalSellerUserId =
+      integration.userId
+
+    const order =
+      await mercadoLivreClient.get(
+        globalSellerUserId,
+        data.resource
+      )
 
     console.log(
       'PEDIDO IMPORTADO:',
-      JSON.stringify(order, null, 2)
+      JSON.stringify(
+        order,
+        null,
+        2
+      )
     )
 
-    const existingOrder =
-      await prisma.order.findFirst({
+    if (!order?.id) {
+      throw new Error(
+        'Mercado Livre retornou um pedido sem ID.'
+      )
+    }
+
+    const orderId =
+      String(order.id)
+
+    const orderItem =
+      order.order_items?.[0]
+
+    const marketplaceProductId =
+      orderItem?.item?.id
+        ? String(orderItem.item.id)
+        : null
+
+    if (!marketplaceProductId) {
+      throw new Error(
+        `Pedido ${orderId} não possui item válido.`
+      )
+    }
+
+    const product =
+      await prisma.product.findFirst({
         where: {
-          externalOrderId: String(order.id),
-          marketplace: 'mercadolivre',
+          userId:
+            globalSellerUserId,
+          marketplaceId:
+            marketplaceProductId,
         },
       })
 
-    if (existingOrder) {
-      console.log(
-        'Pedido já existe no banco.'
-      )
-
+    if (!product) {
       await createSystemLog({
         service: 'Mercado Livre',
-        event: 'Pedido duplicado',
+        event:
+          'Produto do pedido não encontrado',
         status: 'warning',
-        message: `Pedido ${order.id} já existe no banco.`,
-        payload: order,
+        message:
+          `Produto ${marketplaceProductId} do pedido ${orderId} não foi encontrado no GlobalSeller.`,
+        payload: {
+          topic: data.topic,
+          resource: data.resource,
+          externalUserId:
+            data.userId,
+          userId:
+            globalSellerUserId,
+          marketplaceProductId,
+          orderId,
+          receivedAt:
+            data.receivedAt.toISOString(),
+        },
       })
 
-      return
+      throw new Error(
+        `Produto ${marketplaceProductId} do pedido ${orderId} não encontrado no GlobalSeller.`
+      )
     }
 
-    console.log(
-      'Pedido ainda não existe. Pronto para salvar.'
-    )
+    const quantity =
+      Number(
+        orderItem?.quantity ?? 1
+      )
+
+    const amount =
+      Number(
+        order.total_amount ?? 0
+      )
+
+    const buyerName =
+      order.buyer?.nickname ??
+      order.buyer?.first_name ??
+      null
+
+    const customerEmail =
+      order.buyer?.email ??
+      null
+
+    const shippingStatus =
+      order.shipping?.status ??
+      'pending'
+
+    const savedOrder =
+      await prisma.order.upsert({
+        where: {
+          externalOrderId_marketplace: {
+            externalOrderId:
+              orderId,
+            marketplace:
+              'mercadolivre',
+          },
+        },
+
+        update: {
+          productId:
+            product.id,
+
+          sellerId:
+            globalSellerUserId,
+
+          amount,
+
+          status:
+            order.status ??
+            'pending',
+
+          buyerName,
+
+          customerEmail,
+
+          quantity,
+
+          shippingStatus,
+        },
+
+        create: {
+          externalOrderId:
+            orderId,
+
+          marketplace:
+            'mercadolivre',
+
+          productId:
+            product.id,
+
+          sellerId:
+            globalSellerUserId,
+
+          amount,
+
+          status:
+            order.status ??
+            'pending',
+
+          buyerName,
+
+          customerEmail,
+
+          quantity,
+
+          shippingStatus,
+        },
+      })
 
     await createSystemLog({
       service: 'Mercado Livre',
       event: 'Pedido importado',
       status: 'success',
-      message: `Pedido ${order.id} importado com sucesso.`,
-      payload: order,
+      message:
+        `Pedido ${orderId} importado e sincronizado com sucesso.`,
+      payload: {
+        orderId,
+        productId:
+          product.id,
+        marketplaceProductId,
+        externalUserId:
+          data.userId,
+        userId:
+          globalSellerUserId,
+        quantity,
+        amount,
+        databaseOrderId:
+          savedOrder.id,
+      },
     })
 
-    // Aqui ficará a gravação do pedido no banco
+    console.log(
+      `✅ Pedido ${orderId} salvo no banco.`
+    )
+
+    return {
+      success: true,
+      orderId:
+        savedOrder.id,
+    }
   } catch (error) {
-    console.error(error)
+    console.error(
+      '[ML PROCESS ORDER]',
+      error
+    )
 
     await createSystemLog({
       service: 'Mercado Livre',
-      event: 'Erro ao processar pedido',
+      event:
+        'Erro ao processar pedido',
       status: 'error',
-      message: String(error),
-      payload: data,
+      message:
+        String(error),
+      payload: {
+        topic: data.topic,
+        resource: data.resource,
+        userId: data.userId,
+        receivedAt:
+          data.receivedAt.toISOString(),
+      },
     })
 
     throw error

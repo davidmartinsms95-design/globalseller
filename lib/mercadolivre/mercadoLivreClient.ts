@@ -36,13 +36,13 @@ export const mercadoLivreClient = {
       await getValidAccessToken(userId)
 
     return mercadoLivreRequest(
-      endpoint,
-      accessToken,
-      {
-        method: 'POST',
-        body,
-      },
-    )
+  endpoint,
+  accessToken,
+  {
+    method: 'PUT',
+    body,
+  },
+)
   },
 
   async put(
