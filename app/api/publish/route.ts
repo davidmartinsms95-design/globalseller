@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 
-import { authOptions } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 import prisma from '@/lib/prisma'
 import { publishProduct } from '@/lib/publishProduct'
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(
-      authOptions
-    )
+    const user = await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -19,24 +16,6 @@ export async function POST(req: Request) {
         },
         {
           status: 401,
-        }
-      )
-    }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Usuário não encontrado',
-        },
-        {
-          status: 404,
         }
       )
     }
@@ -57,9 +36,13 @@ export async function POST(req: Request) {
     }
 
     const product =
-      await prisma.product.findUnique({
+      await prisma.product.findFirst({
         where: {
           id: productId,
+          userId: user.id,
+        },
+        select: {
+          id: true,
         },
       })
 
@@ -71,19 +54,6 @@ export async function POST(req: Request) {
         },
         {
           status: 404,
-        }
-      )
-    }
-
-    if (product.userId !== user.id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Este produto não pertence ao usuário.',
-        },
-        {
-          status: 403,
         }
       )
     }
