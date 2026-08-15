@@ -43,35 +43,57 @@ export async function GET() {
         },
       })
 
-    const products = await Promise.all(
-      resellerProducts.map(async (item) => {
-        const publishedProduct =
-          await prisma.product.findFirst({
-            where: {
-              resellerProductId: item.id,
-              userId: user.id,
-            },
-          })
+    const publishedProducts =
+  await prisma.product.findMany({
+    where: {
+      userId: user.id,
+      resellerProductId: {
+        in: resellerProducts.map(
+          (item) => item.id,
+        ),
+      },
+    },
+    select: {
+      id: true,
+      resellerProductId: true,
+      marketplaceId: true,
+      permalink: true,
+      status: true,
+    },
+  })
 
-        return {
-          ...item,
+const publishedProductsMap = new Map(
+  publishedProducts.map((product) => [
+    product.resellerProductId,
+    product,
+  ]),
+)
 
-          productId: publishedProduct?.id ?? null,
+const products = resellerProducts.map(
+  (item) => {
+    const publishedProduct =
+      publishedProductsMap.get(item.id)
 
-          marketplaceId:
-            publishedProduct?.marketplaceId ??
-            null,
+    return {
+      ...item,
 
-          permalink:
-            publishedProduct?.permalink ??
-            null,
+      productId:
+        publishedProduct?.id ?? null,
 
-          status:
-            publishedProduct?.status ??
-            null,
-        }
-      })
-    )
+      marketplaceId:
+        publishedProduct?.marketplaceId ??
+        null,
+
+      permalink:
+        publishedProduct?.permalink ??
+        null,
+
+      status:
+        publishedProduct?.status ??
+        null,
+    }
+  },
+)
 
     return NextResponse.json({
       step: 'OK',
