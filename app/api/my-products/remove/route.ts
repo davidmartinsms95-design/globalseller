@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import prisma from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Não autorizado.',
+          error: 'Não autorizado',
         },
         {
           status: 401,
@@ -22,17 +21,22 @@ export async function POST(req: Request) {
 
     const body = await req.json()
 
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-    })
+    const resellerProduct =
+      await prisma.resellerProduct.findFirst({
+        where: {
+          id: body.id,
+          resellerId: user.id,
+        },
+        select: {
+          id: true,
+        },
+      })
 
-    if (!user) {
+    if (!resellerProduct) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Usuário não encontrado.',
+          error: 'Produto não encontrado',
         },
         {
           status: 404,
@@ -40,10 +44,9 @@ export async function POST(req: Request) {
       )
     }
 
-    await prisma.resellerProduct.deleteMany({
+    await prisma.resellerProduct.delete({
       where: {
-        id: body.id,
-        resellerId: user.id,
+        id: resellerProduct.id,
       },
     })
 
@@ -51,13 +54,16 @@ export async function POST(req: Request) {
       success: true,
       message: 'Produto removido do catálogo.',
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error(error)
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Erro interno',
       },
       {
         status: 500,
