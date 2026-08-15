@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 
-import { authOptions } from '../../../../lib/auth'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 import {
   marketplaceManager,
@@ -9,10 +8,9 @@ import {
 
 export async function POST(req: Request) {
   try {
-    const session =
-      await getServerSession(authOptions)
+    const user = await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
@@ -34,8 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            'Produto não informado.',
+          error: 'Produto não informado.',
         },
         {
           status: 400,
@@ -50,7 +47,7 @@ export async function POST(req: Request) {
 
     const result =
       await provider.publishResellerProduct(
-        session.user.id,
+        user.id,
         resellerProductId,
       )
 
