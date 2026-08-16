@@ -4,17 +4,11 @@ import { useEffect, useState } from 'react'
 
 interface Product {
   id: string
-
   title: string
-
   price: number
-
   thumbnail: string
-
   available_quantity: number
-
   status: string
-
   permalink: string
 }
 
@@ -25,6 +19,9 @@ export default function MercadoLivrePage() {
   const [loading, setLoading] =
     useState(true)
 
+  const [importing, setImporting] =
+    useState(false)
+
   async function loadProducts() {
     try {
       const response = await fetch(
@@ -33,18 +30,60 @@ export default function MercadoLivrePage() {
 
       const data = await response.json()
 
-if (Array.isArray(data)) {
-  setProducts(data)
-} else {
-  console.log('ERRO ML:', data)
-  setProducts([])
-}
+      if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        console.error(
+          'ERRO ML:',
+          data
+        )
 
-      setLoading(false)
+        setProducts([])
+      }
     } catch (error) {
-      console.log(error)
+      console.error(error)
 
+      setProducts([])
+    } finally {
       setLoading(false)
+    }
+  }
+
+  async function importProducts() {
+    try {
+      setImporting(true)
+
+      const response = await fetch(
+        '/api/integrations/mercadolivre/import-products',
+        {
+          method: 'POST',
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(
+          data.error ??
+            'Erro ao importar produtos.'
+        )
+
+        return
+      }
+
+      alert(
+        `${data.imported} produto(s) importado(s) com sucesso.`
+      )
+
+      await loadProducts()
+    } catch (error) {
+      console.error(error)
+
+      alert(
+        'Erro ao importar produtos.'
+      )
+    } finally {
+      setImporting(false)
     }
   }
 
@@ -54,15 +93,38 @@ if (Array.isArray(data)) {
 
   return (
     <div>
-      <div className="mb-12">
-        <h1 className="text-5xl font-bold text-yellow-400">
-          Mercado Livre
-        </h1>
+      <div className="mb-12 flex items-center justify-between">
+        <div>
+          <h1 className="text-5xl font-bold text-yellow-400">
+            Mercado Livre
+          </h1>
 
-        <p className="mt-4 text-zinc-400">
-          Produtos sincronizados da sua conta
-          Mercado Livre.
-        </p>
+          <p className="mt-4 text-zinc-400">
+            Produtos sincronizados da sua conta
+            Mercado Livre.
+          </p>
+        </div>
+
+        <button
+          onClick={importProducts}
+          disabled={importing}
+          className="
+            rounded-2xl
+            bg-yellow-400
+            px-6
+            py-4
+            font-bold
+            text-black
+            transition
+            hover:bg-yellow-300
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+          "
+        >
+          {importing
+            ? 'Importando...'
+            : 'Importar Produtos'}
+        </button>
       </div>
 
       {loading ? (
@@ -98,8 +160,7 @@ if (Array.isArray(data)) {
                     </h2>
 
                     <p className="mt-2 text-zinc-400">
-                      ID:
-                      {' '}
+                      ID:{' '}
                       {product.id}
                     </p>
                   </div>
@@ -149,6 +210,7 @@ if (Array.isArray(data)) {
                 <a
                   href={product.permalink}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="block w-full rounded-2xl bg-yellow-400 px-6 py-4 text-center font-bold text-black transition hover:bg-yellow-300"
                 >
                   Abrir anúncio
@@ -161,4 +223,3 @@ if (Array.isArray(data)) {
     </div>
   )
 }
-
