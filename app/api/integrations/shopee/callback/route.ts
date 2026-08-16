@@ -8,9 +8,8 @@ import { authOptions } from '../../../../../lib/auth'
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(
-      authOptions
-    )
+    const session =
+      await getServerSession(authOptions)
 
     if (!session?.user?.email) {
       return NextResponse.redirect(
@@ -18,11 +17,12 @@ export async function GET(req: Request) {
       )
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-    })
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          email: session.user.email,
+        },
+      })
 
     if (!user) {
       return NextResponse.redirect(
@@ -30,7 +30,8 @@ export async function GET(req: Request) {
       )
     }
 
-    const { searchParams } = new URL(req.url)
+    const { searchParams } =
+      new URL(req.url)
 
     const code =
       searchParams.get('code')
@@ -60,35 +61,49 @@ export async function GET(req: Request) {
       shopId
     )
 
-    const tokenResponse = await fetch(
-  `${process.env.NEXTAUTH_URL}/api/integrations/shopee/token`,
-  {
-    method: 'POST',
+    const cookie =
+      req.headers.get('cookie')
 
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    const tokenResponse =
+      await fetch(
+        `${process.env.NEXTAUTH_URL}/api/integrations/shopee/token`,
+        {
+          method: 'POST',
 
-    body: JSON.stringify({
-      code,
-      shopId,
-      userId: user.id,
-    }),
-  }
-)
+          headers: {
+            'Content-Type':
+              'application/json',
 
-const tokenData = await tokenResponse.json()
+            ...(cookie
+              ? {
+                  Cookie: cookie,
+                }
+              : {}),
+          },
 
-if (!tokenResponse.ok) {
-  return NextResponse.json(
-    {
-      error: tokenData.error ?? 'Erro ao gerar token da Shopee',
-    },
-    {
-      status: 500,
+          body: JSON.stringify({
+            code,
+            shopId,
+            userId: user.id,
+          }),
+        }
+      )
+
+    const tokenData =
+      await tokenResponse.json()
+
+    if (!tokenResponse.ok) {
+      return NextResponse.json(
+        {
+          error:
+            tokenData.error ??
+            'Erro ao gerar token da Shopee',
+        },
+        {
+          status: 500,
+        }
+      )
     }
-  )
-}
 
     return NextResponse.redirect(
       'https://globalseller.vercel.app/dashboard/integrations'
@@ -107,4 +122,3 @@ if (!tokenResponse.ok) {
     )
   }
 }
-
