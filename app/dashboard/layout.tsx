@@ -1,8 +1,7 @@
 import { Crown } from 'lucide-react'
-import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 
-import { authOptions } from '../../lib/auth'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 import SidebarItem from '@/components/dashboard/SidebarItem'
 import TopBar from '@/components/dashboard/TopBar'
@@ -12,22 +11,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession(authOptions)
+  const user = await getCurrentUser()
 
-  if (!session?.user?.email) {
+  if (!user) {
     redirect('/login')
-  }
-
-  const user = {
-    plan: 'free',
-    maxProducts: 5,
   }
 
   return (
     <div className="flex min-h-screen bg-[#09090b] text-white">
-
       <aside className="w-72 border-r border-zinc-800 bg-black">
-
         <div className="border-b border-zinc-800 p-8">
           <h1 className="text-3xl font-bold text-orange-500">
             GlobalSeller
@@ -39,7 +31,6 @@ export default async function DashboardLayout({
         </div>
 
         <div className="space-y-2 p-6">
-
           <SidebarItem
             href="/dashboard"
             label="Dashboard"
@@ -53,8 +44,26 @@ export default async function DashboardLayout({
           />
 
           <SidebarItem
+            href="/dashboard/catalog"
+            label="Catálogo"
+            icon="products"
+          />
+
+          <SidebarItem
+            href="/dashboard/published-products"
+            label="Produtos Publicados"
+            icon="products"
+          />
+
+          <SidebarItem
             href="/dashboard/orders"
             label="Pedidos"
+            icon="orders"
+          />
+
+          <SidebarItem
+            href="/dashboard/orders-center"
+            label="Centro de Pedidos"
             icon="orders"
           />
 
@@ -65,9 +74,39 @@ export default async function DashboardLayout({
           />
 
           <SidebarItem
+            href="/dashboard/mercadolivre"
+            label="Mercado Livre"
+            icon="marketplace"
+          />
+
+          <SidebarItem
             href="/dashboard/finance"
             label="Financeiro"
             icon="finance"
+          />
+
+          <SidebarItem
+            href="/dashboard/customers"
+            label="Clientes"
+            icon="orders"
+          />
+
+          <SidebarItem
+            href="/dashboard/intelligence"
+            label="Inteligência"
+            icon="dashboard"
+          />
+
+          <SidebarItem
+            href="/dashboard/auditor"
+            label="Auditor"
+            icon="dashboard"
+          />
+
+          <SidebarItem
+            href="/dashboard/insights"
+            label="Insights"
+            icon="dashboard"
           />
 
           <SidebarItem
@@ -76,12 +115,12 @@ export default async function DashboardLayout({
             icon="integrations"
           />
 
-<SidebarItem
-  href="/dashboard/operations"
-  label="Operations"
-  icon="operations"
-/>
- 
+          <SidebarItem
+            href="/dashboard/operations"
+            label="Operations"
+            icon="operations"
+          />
+
           <SidebarItem
             href="/dashboard/admin"
             label="Administração"
@@ -89,15 +128,25 @@ export default async function DashboardLayout({
           />
 
           <SidebarItem
+            href="/dashboard/admin/suppliers"
+            label="Fornecedores"
+            icon="admin"
+          />
+
+          <SidebarItem
+            href="/dashboard/admin/marketplace-products"
+            label="Produtos Marketplace"
+            icon="marketplace"
+          />
+
+          <SidebarItem
             href="/"
             label="Landing Page"
             icon="home"
           />
-
         </div>
 
         <div className="mx-6 mt-10 rounded-3xl border border-orange-500/20 bg-orange-500/10 p-6">
-
           <div className="mb-3 flex items-center gap-2">
             <Crown
               size={20}
@@ -127,31 +176,24 @@ export default async function DashboardLayout({
               ? 'Gerenciar Plano'
               : 'Upgrade PRO'}
           </a>
-
         </div>
 
         <div className="mx-6 mt-6 rounded-2xl bg-zinc-900 p-5">
-
           <p className="text-sm text-zinc-500">
             Usuário conectado
           </p>
 
           <p className="mt-2 break-all font-semibold">
-            {session.user.email}
+            {user.email}
           </p>
-
         </div>
-
       </aside>
 
       <main className="flex-1 overflow-auto p-10">
-
         <TopBar />
 
         {children}
-
       </main>
-
     </div>
   )
 }
