@@ -35,14 +35,14 @@ export default function PublicationChecklist({
   return (
     <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
       <h2 className="mb-6 text-2xl font-bold text-white">
-        Checklist do Anúncio
+        Checklist do anúncio
       </h2>
 
       <div className="space-y-4">
         {checks.map((item) => (
           <div
             key={item.label}
-            className="flex items-center justify-between"
+            className="flex items-center justify-between rounded-xl border border-zinc-800 p-4"
           >
             <span>{item.label}</span>
 
@@ -53,7 +53,7 @@ export default function PublicationChecklist({
                   : 'font-bold text-red-500'
               }
             >
-              {item.ok ? '✓' : '✗'}
+              {item.ok ? '✔' : '✖'}
             </span>
           </div>
         ))}
