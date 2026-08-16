@@ -1,49 +1,57 @@
+import { calculateHealthScore } from '@/lib/intelligence/health'
+import { calculateSeoScore } from '@/lib/intelligence/seo'
+import { generateRecommendations } from '@/lib/intelligence/recommendations'
+
+interface ProductInput {
+  title?: string
+  description?: string | null
+  image?: string | null
+  price?: number
+  stock?: number
+  mlCategoryId?: string | null
+  status?: string | null
+}
+
+export interface ProductDiagnosisResult {
+  healthScore: number
+  seoScore: number
+  suggestions: string[]
+  strengths: string[]
+  warnings: string[]
+}
+
 export function getProductDiagnosis(
-  product: any
-) {
-  const suggestions: string[] = []
+  product: ProductInput,
+): ProductDiagnosisResult {
+  const health = calculateHealthScore({
+    title: product.title ?? '',
+    description: product.description,
+    image: product.image,
+    stock: product.stock ?? 0,
+    category: product.mlCategoryId,
+    status: product.status ?? 'active',
+  })
 
-  if (
-    !product.title ||
-    product.title.length < 30
-  ) {
-    suggestions.push(
-      'Melhore o título do produto.'
-    )
+  const seo = calculateSeoScore({
+    title: product.title ?? '',
+    description: product.description,
+    category: product.mlCategoryId,
+    image: product.image,
+  })
+
+  const recommendations =
+    generateRecommendations({
+      health,
+      seo,
+    })
+
+  return {
+    healthScore: health.score,
+    seoScore: seo.score,
+    strengths: health.strengths,
+    warnings: health.warnings,
+    suggestions: recommendations.map(
+      (item) => item.description,
+    ),
   }
-
-  if (
-    !product.description ||
-    product.description.length < 100
-  ) {
-    suggestions.push(
-      'Adicione uma descrição mais completa.'
-    )
-  }
-
-  if (!product.image) {
-    suggestions.push(
-      'Adicione uma imagem principal.'
-    )
-  }
-
-  if (product.price <= 0) {
-    suggestions.push(
-      'Informe um preço válido.'
-    )
-  }
-
-  if (product.stock <= 0) {
-    suggestions.push(
-      'Informe um estoque disponível.'
-    )
-  }
-
-  if (!product.mlCategoryId) {
-    suggestions.push(
-      'Escolha uma categoria.'
-    )
-  }
-
-  return suggestions
 }
