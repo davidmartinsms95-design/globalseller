@@ -277,21 +277,6 @@ export default function EditProductPage() {
           shortDescription
         }
         description={description}
-        isAnalyzing={isAnalyzing}
-        healthScore={healthScore}
-        seoScore={seoScore}
-        suggestedTitle={
-          suggestedTitle
-        }
-        suggestedCategory={
-          suggestedCategory
-        }
-        suggestedPrice={
-          suggestedPrice
-        }
-        suggestedDescription={
-          suggestedDescription
-        }
         onTitleChange={setTitle}
         onCategoryChange={
           setCategory

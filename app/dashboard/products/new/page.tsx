@@ -206,27 +206,6 @@ export default function NewProductPage() {
           shortDescription
         }
         description={description}
-        isAnalyzing={
-          isAnalyzing
-        }
-        healthScore={
-          healthScore
-        }
-        seoScore={
-          seoScore
-        }
-        suggestedTitle={
-          suggestedTitle
-        }
-        suggestedCategory={
-          suggestedCategory
-        }
-        suggestedPrice={
-          suggestedPrice
-        }
-        suggestedDescription={
-          suggestedDescription
-        }
         onTitleChange={
           setTitle
         }
