@@ -9,27 +9,28 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  name             String
-  email            String            @unique
-  password         String
-  createdAt        DateTime          @default(now())
-  maxProducts      Int               @default(5)
-  plan             String            @default("free")
-  role             String            @default("reseller")
-  integrations     Integration[]
-  orders           Order[]
-  products         Product[]
-  resellerProducts ResellerProduct[]
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  password            String
+  createdAt           DateTime             @default(now())
+  maxProducts         Int                  @default(5)
+  plan                String               @default("free")
+  role                String               @default("reseller")
   financeTransactions FinanceTransaction[]
+  integrations        Integration[]
+  orders              Order[]
+  products            Product[]
+  resellerProducts    ResellerProduct[]
 }
 
 model Supplier {
-  id          String               @id @default(cuid())
+  id          String                     @id @default(cuid())
   companyName String
-  email       String               @unique
+  email       String                     @unique
   phone       String?
-  createdAt   DateTime             @default(now())
+  createdAt   DateTime                   @default(now())
+  imports     MarketplaceImportHistory[]
   products    MarketplaceProduct[]
 }
 
@@ -51,6 +52,25 @@ model MarketplaceProduct {
   sku              String?
   supplier         Supplier          @relation(fields: [supplierId], references: [id])
   resellerProducts ResellerProduct[]
+
+  @@index([supplierId])
+  @@index([supplierId, sku])
+}
+
+model MarketplaceImportHistory {
+  id         String   @id @default(cuid())
+  supplierId String
+  fileName   String
+  total      Int
+  imported   Int
+  duplicates Int
+  errors     Int
+  duration   Int
+  createdAt  DateTime @default(now())
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([supplierId])
+  @@index([createdAt])
 }
 
 model ResellerProduct {
@@ -63,6 +83,9 @@ model ResellerProduct {
   publishedProducts    Product[]
   marketplaceProduct   MarketplaceProduct @relation(fields: [marketplaceProductId], references: [id])
   reseller             User               @relation(fields: [resellerId], references: [id])
+
+  @@index([resellerId])
+  @@index([marketplaceProductId])
 }
 
 model Product {
@@ -81,73 +104,85 @@ model Product {
   description       String?
   mlCategoryId      String?
   resellerProductId String?
+  brand             String?
+  costPrice         Float?
+  ean               String?
+  height            Float?
+  length            Float?
+  model             String?
+  shortDescription  String?
+  sku               String?
+  weight            Float?
+  width             Float?
   orders            Order[]
   resellerProduct   ResellerProduct? @relation(fields: [resellerProductId], references: [id])
   user              User             @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Order {
-  id                String   @id @default(cuid())
-  productId         String
-  sellerId          String
-  amount            Float
-  status            String   @default("pending")
-  paymentId         String?
-  externalReference String?
-  customerEmail     String?
-  createdAt         DateTime @default(now())
-  buyerName         String?
-  externalOrderId   String?
-  marketplace       String   @default("mercadolivre")
-  quantity          Int      @default(1)
-  shippingStatus    String?
-  product           Product  @relation(fields: [productId], references: [id])
-  seller            User     @relation(fields: [sellerId], references: [id])
+  id                  String               @id @default(cuid())
+  productId           String
+  sellerId            String
+  amount              Float
+  status              String               @default("pending")
+  paymentId           String?
+  externalReference   String?
+  customerEmail       String?
+  createdAt           DateTime             @default(now())
+  buyerName           String?
+  externalOrderId     String?
+  marketplace         String               @default("mercadolivre")
+  quantity            Int                  @default(1)
+  shippingStatus      String?
   financeTransactions FinanceTransaction[] @relation("OrderTransactions")
+  product             Product              @relation(fields: [productId], references: [id])
+  seller              User                 @relation(fields: [sellerId], references: [id])
 
   @@unique([externalOrderId, marketplace])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([createdAt])
+  @@index([status])
 }
 
 model Integration {
-  id             String   @id @default(cuid())
-  provider       String
-  accessToken    String?
-  refreshToken   String?
-  externalUserId String?
-  userId         String
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id])
+  id                   String    @id @default(cuid())
+  provider             String
+  accessToken          String?
+  refreshToken         String?
+  externalUserId       String?
+  userId               String
+  createdAt            DateTime  @default(now())
+  accessTokenExpiresAt DateTime?
+  user                 User      @relation(fields: [userId], references: [id])
 
   @@unique([provider, userId])
+  @@index([userId])
 }
 
 model FinanceTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  orderId     String?
-
-  type        String
-  category    String
-  description String?
-
-  amount      Float
-
-  // Novos campos ERP
-  dueDate        DateTime?
-  paymentDate    DateTime?
-
-  status         String   @default("pending")
-  paymentMethod  String?
-  reference      String?
-  notes          String?
-
-  isRecurring    Boolean  @default(false)
-  recurrence     String?
-
-  createdAt   DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id])
-  order  Order? @relation("OrderTransactions", fields: [orderId], references: [id])
+  id            String    @id @default(cuid())
+  userId        String
+  orderId       String?
+  type          String
+  category      String
+  description   String?
+  amount        Float
+  createdAt     DateTime  @default(now())
+  dueDate       DateTime?
+  isRecurring   Boolean   @default(false)
+  notes         String?
+  paymentDate   DateTime?
+  paymentMethod String?
+  recurrence    String?
+  reference     String?
+  status        String    @default("pending")
+  order         Order?    @relation("OrderTransactions", fields: [orderId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([type])
@@ -157,17 +192,13 @@ model FinanceTransaction {
 }
 
 model SystemLog {
-  id          String   @id @default(cuid())
-
-  service     String
-  event       String
-  status      String
-
-  message     String?
-
-  payload     Json?
-
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  service   String
+  event     String
+  status    String
+  message   String?
+  payload   Json?
+  createdAt DateTime @default(now())
 
   @@index([service])
   @@index([status])
