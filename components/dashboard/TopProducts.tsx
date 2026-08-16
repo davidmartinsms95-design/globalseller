@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+import EmptyState from '@/components/ui/EmptyState'
 
 interface Product {
   id: string
@@ -9,65 +11,50 @@ interface Product {
   stock: number
 }
 
-export default function TopProducts() {
-  const [products, setProducts] = useState<Product[]>([])
+interface TopProductsProps {
+  products: Product[]
+}
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const response = await fetch('/api/products')
-
-        const data = await response.json()
-
-        if (Array.isArray(data)) {
-          setProducts(data)
-        } else {
-          console.error('Resposta inválida da API:', data)
-          setProducts([])
-        }
-      } catch (error) {
-        console.error(error)
-        setProducts([])
-      }
-    }
-
-    loadProducts()
-  }, [])
-
+export default function TopProducts({
+  products,
+}: TopProductsProps) {
   return (
-    <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+    <Card>
       <h2 className="mb-6 text-2xl font-bold text-white">
-        🏆 Top Produtos
+        Top Produtos
       </h2>
 
-      <div className="space-y-4">
-        {products.slice(0, 5).map((product, index) => (
-          <div
-            key={product.id}
-            className="flex items-center justify-between rounded-xl border border-zinc-800 p-4"
-          >
-            <div>
-              <p className="font-semibold text-white">
-                {index + 1}. {product.title}
-              </p>
+      {products.length === 0 ? (
+        <EmptyState
+          title="Nenhum produto"
+          description="Importe produtos para começar."
+        />
+      ) : (
+        <div className="space-y-4">
+          {products
+            .slice(0, 5)
+            .map((product, index) => (
+              <div
+                key={product.id}
+                className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+              >
+                <div>
+                  <p className="font-semibold text-white">
+                    #{index + 1} {product.title}
+                  </p>
 
-              <p className="text-sm text-zinc-400">
-                Estoque: {product.stock}
-              </p>
-            </div>
+                  <Badge>
+                    Estoque: {product.stock}
+                  </Badge>
+                </div>
 
-            <p className="font-bold text-green-500">
-              R$ {product.price.toFixed(2)}
-            </p>
-          </div>
-        ))}
-
-        {products.length === 0 && (
-          <p className="text-zinc-500">
-            Nenhum produto encontrado.
-          </p>
-        )}
-      </div>
-    </div>
+                <p className="font-bold text-green-500">
+                  R$ {product.price.toFixed(2)}
+                </p>
+              </div>
+            ))}
+        </div>
+      )}
+    </Card>
   )
 }
