@@ -9,23 +9,43 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
+        {
+          error: 'Não autorizado',
+        },
+        {
+          status: 401,
+        }
       )
     }
 
-    const orders = await prisma.order.findMany({
-      where: {
-        sellerId: user.id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const orders =
+      await prisma.order.findMany({
+        where: {
+          sellerId: user.id,
+        },
+        select: {
+          id: true,
+          productId: true,
+          amount: true,
+          status: true,
+          marketplace: true,
+          quantity: true,
+          buyerName: true,
+          customerEmail: true,
+          shippingStatus: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
 
     return NextResponse.json(orders)
   } catch (error) {
-    console.error('[ORDERS]', error)
+    console.error(
+      '[ORDERS]',
+      error
+    )
 
     return NextResponse.json([])
   }
