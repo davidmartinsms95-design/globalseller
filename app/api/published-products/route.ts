@@ -1,44 +1,46 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 
 import prisma from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-    })
+    const user = await getCurrentUser()
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
+        {
+          error: 'Não autorizado',
+        },
+        {
+          status: 401,
+        }
       )
     }
 
-    const products = await prisma.product.findMany({
-      where: {
-        userId: user.id,
-        marketplaceId: {
-          not: null,
+    const products =
+      await prisma.product.findMany({
+        where: {
+          userId: user.id,
+          marketplaceId: {
+            not: null,
+          },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          stock: true,
+          status: true,
+          image: true,
+          marketplaceId: true,
+          permalink: true,
+          createdAt: true,
+        },
+      })
 
     return NextResponse.json(products)
   } catch (error) {
@@ -46,7 +48,8 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error: 'Erro ao buscar anúncios publicados.',
+        error:
+          'Erro ao buscar anúncios publicados.',
       },
       {
         status: 500,
