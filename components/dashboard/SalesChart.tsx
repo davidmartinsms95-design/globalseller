@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
   CartesianGrid,
-  XAxis,
+  Line,
+  LineChart,
+  ResponsiveContainer,
   Tooltip,
+  XAxis,
 } from 'recharts'
 
 interface ChartData {
@@ -16,43 +14,64 @@ interface ChartData {
   sales: number
 }
 
-export default function SalesChart() {
-  const [data, setData] = useState<ChartData[]>([])
+interface SalesChartProps {
+  data: ChartData[]
+}
 
-  useEffect(() => {
-    async function loadChart() {
-      try {
-        const response = await fetch('/api/dashboard/chart')
-
-        const result = await response.json()
-
-        setData(result)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    loadChart()
-  }, [])
-
+export default function SalesChart({
+  data,
+}: SalesChartProps) {
   return (
     <div className="h-80 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <CartesianGrid stroke="#27272a" />
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
+        <LineChart
+          data={data}
+          margin={{
+            top: 20,
+            right: 20,
+            left: 0,
+            bottom: 0,
+          }}
+        >
+          <CartesianGrid
+            stroke="#27272a"
+            strokeDasharray="4 4"
+            vertical={false}
+          />
 
           <XAxis
             dataKey="day"
             stroke="#a1a1aa"
+            tickLine={false}
+            axisLine={false}
           />
 
-          <Tooltip />
+          <Tooltip
+            contentStyle={{
+              background: '#18181b',
+              border: '1px solid #27272a',
+              borderRadius: '16px',
+              color: '#fff',
+            }}
+            cursor={{
+              stroke: '#f97316',
+              strokeDasharray: '3 3',
+            }}
+          />
 
           <Line
             type="monotone"
             dataKey="sales"
             stroke="#f97316"
             strokeWidth={4}
+            dot={false}
+            activeDot={{
+              r: 6,
+            }}
+            animationDuration={900}
           />
         </LineChart>
       </ResponsiveContainer>
