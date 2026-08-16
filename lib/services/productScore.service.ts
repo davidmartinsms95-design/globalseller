@@ -1,35 +1,61 @@
+import { calculateHealthScore } from '@/lib/intelligence/health'
+import { calculateSeoScore } from '@/lib/intelligence/seo'
+import { generateRecommendations } from '@/lib/intelligence/recommendations'
+
+export interface ProductScoreResult {
+  score: number
+  healthScore: number
+  seoScore: number
+  suggestions: string[]
+}
+
+interface ProductInput {
+  title?: string
+  description?: string | null
+  image?: string | null
+  price?: number
+  stock?: number
+  mlCategoryId?: string | null
+  marketplaceId?: string | null
+  status?: string | null
+}
+
 export function calculateProductScore(
-  product: any
-) {
-  let score = 0
+  product: ProductInput,
+): ProductScoreResult {
+  const health = calculateHealthScore({
+    title: product.title ?? '',
+    description: product.description,
+    image: product.image,
+    stock: product.stock ?? 0,
+    category: product.mlCategoryId,
+    status: product.status ?? 'active',
+  })
 
-  if (product.title?.length >= 30) {
-    score += 20
+  const seo = calculateSeoScore({
+    title: product.title ?? '',
+    description: product.description,
+    category: product.mlCategoryId,
+    image: product.image,
+  })
+
+  const recommendations =
+    generateRecommendations({
+      health,
+      seo,
+    })
+
+  const score = Math.round(
+    health.score * 0.6 +
+      seo.score * 0.4,
+  )
+
+  return {
+    score,
+    healthScore: health.score,
+    seoScore: seo.score,
+    suggestions: recommendations.map(
+      (item) => item.description,
+    ),
   }
-
-  if (product.description?.length >= 100) {
-    score += 20
-  }
-
-  if (product.image) {
-    score += 15
-  }
-
-  if (product.price > 0) {
-    score += 15
-  }
-
-  if (product.stock > 0) {
-    score += 10
-  }
-
-  if (product.mlCategoryId) {
-    score += 10
-  }
-
-  if (product.marketplaceId) {
-    score += 10
-  }
-
-  return score
 }
