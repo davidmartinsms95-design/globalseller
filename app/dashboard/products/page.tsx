@@ -1,7 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+
+import Card from '@/components/ui/Card'
+import PageHeader from '@/components/ui/PageHeader'
+import ProductCard from '@/components/dashboard/products/ProductCard'
+import ProductDashboard from '@/components/dashboard/products/ProductDashboard'
+
+import {
+  Package,
+  Search,
+  Brain,
+} from 'lucide-react'
 
 interface Product {
   id: string
@@ -20,11 +30,17 @@ interface Product {
 
   marketplaceProduct: {
     id: string
+
     title: string
+
     description?: string
+
     costPrice: number
+
     suggestedPrice: number
+
     image?: string
+
     stock: number
 
     supplier: {
@@ -33,7 +49,57 @@ interface Product {
   }
 }
 
-  
+function calculateHealth(product: Product) {
+  let score = 100
+
+  if (
+    product.marketplaceProduct.title.length <
+    60
+  ) {
+    score -= 15
+  }
+
+  if (
+    !product.marketplaceProduct.description ||
+    product.marketplaceProduct.description.length <
+      300
+  ) {
+    score -= 20
+  }
+
+  if (!product.marketplaceProduct.image) {
+    score -= 15
+  }
+
+  if (
+    product.marketplaceProduct.stock <= 0
+  ) {
+    score -= 20
+  }
+
+  if (!product.active) {
+    score -= 15
+  }
+
+  return Math.max(score, 0)
+}
+
+function getHealthVariant(
+  score: number
+):
+  | 'success'
+  | 'warning'
+  | 'error' {
+  if (score >= 85) {
+    return 'success'
+  }
+
+  if (score >= 60) {
+    return 'warning'
+  }
+
+  return 'error'
+}
 
 export default function ProductsPage() {
   const [products, setProducts] =
@@ -54,13 +120,65 @@ export default function ProductsPage() {
       const data =
         await response.json()
 
-      setProducts(data.products || [])
+      setProducts(
+        data.products || []
+      )
     } catch (error) {
       console.error(error)
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadProducts()
+  }, [])
+
+  const filteredProducts =
+    useMemo(() => {
+      return products.filter(
+        (product) =>
+          product.marketplaceProduct.title
+            .toLowerCase()
+            .includes(
+              search.toLowerCase()
+            )
+      )
+    }, [products, search])
+
+  const totalProducts =
+    products.length
+
+  const activeProducts =
+    products.filter(
+      (product) => product.active
+    ).length
+
+  const totalStock =
+    products.reduce(
+      (total, product) =>
+        total +
+        product.marketplaceProduct.stock,
+      0
+    )
+
+  const estimatedProfit =
+    products.reduce(
+      (total, product) => {
+        const sellPrice =
+          product.customPrice ??
+          product.marketplaceProduct
+            .suggestedPrice
+
+        return (
+          total +
+          (sellPrice -
+            product.marketplaceProduct
+              .costPrice)
+        )
+      },
+      0
+    )
 
   async function savePrice(
     id: string,
@@ -71,12 +189,10 @@ export default function ProductsPage() {
         '/api/my-products/update-price',
         {
           method: 'POST',
-
           headers: {
             'Content-Type':
               'application/json',
           },
-
           body: JSON.stringify({
             id,
             customPrice,
@@ -87,14 +203,16 @@ export default function ProductsPage() {
       const data =
         await response.json()
 
-      if (data.success) {
-        alert('Preço atualizado')
+      if (!data.success) {
+        throw new Error(
+          data.error
+        )
       }
     } catch (error) {
       console.error(error)
 
       alert(
-        'Erro ao atualizar preço'
+        'Erro ao atualizar preço.'
       )
     }
   }
@@ -107,13 +225,10 @@ export default function ProductsPage() {
         '/api/my-products/publish',
         {
           method: 'POST',
-
           headers: {
             'Content-Type':
               'application/json',
           },
-          
-
           body: JSON.stringify({
             resellerProductId,
           }),
@@ -123,310 +238,242 @@ export default function ProductsPage() {
       const data =
         await response.json()
 
-      if (data.success) {
-        alert(
-          'Produto publicado com sucesso'
-        )
-      } else {
-        alert(
-          data.error ??
-            'Erro ao publicar produto'
+      if (!data.success) {
+        throw new Error(
+          data.error
         )
       }
+
+      loadProducts()
     } catch (error) {
       console.error(error)
 
       alert(
-        'Erro ao publicar produto'
+        'Erro ao publicar produto.'
       )
     }
   }
-  async function removeProduct(id: string) {
-  const confirmDelete = confirm(
-    'Deseja remover este produto do catálogo?'
-  )
 
-  if (!confirmDelete) return
+  async function removeProduct(
+    id: string
+  ) {
+    const confirmDelete =
+      confirm(
+        'Deseja remover este produto?'
+      )
 
-  try {
-    const response = await fetch(
-      '/api/my-products/remove',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id,
-        }),
+    if (!confirmDelete) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        '/api/my-products/remove',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
+            id,
+          }),
+        }
+      )
+
+      const data =
+        await response.json()
+
+      if (!data.success) {
+        throw new Error(
+          data.error
+        )
       }
-    )
 
-    const data = await response.json()
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error)
-    }
-
-    setProducts((current) =>
-      current.filter((product) => product.id !== id)
-    )
-
-    alert('Produto removido com sucesso!')
-  } catch (error) {
-    console.error(error)
-
-    alert('Erro ao remover produto.')
-  }
-}
-    useEffect(() => {
-    loadProducts()
-  }, [])
-
-  const totalProducts = products.length
-
-  const activeProducts = products.filter(
-    (product) => product.active
-  ).length
-
-  const totalStock = products.reduce(
-    (total, product) =>
-      total + product.marketplaceProduct.stock,
-    0
-  )
-
-  const estimatedProfit = products.reduce(
-    (total, product) => {
-      const sellPrice =
-        product.customPrice ??
-        product.marketplaceProduct.suggestedPrice
-
-      return (
-        total +
-        (sellPrice -
-          product.marketplaceProduct.costPrice)
+      setProducts((current) =>
+        current.filter(
+          (product) =>
+            product.id !== id
+        )
       )
-    },
-    0
-  )
+    } catch (error) {
+      console.error(error)
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.marketplaceProduct.title
-        .toLowerCase()
-        .includes(search.toLowerCase())
-  )
+      alert(
+        'Erro ao remover produto.'
+      )
+    }
+  }
 
   if (loading) {
     return (
-      <div className="p-10 text-white">
+      <div className="p-10 text-zinc-400">
         Carregando produtos...
       </div>
     )
   }
 
   return (
-    <div className="p-10">
-      <h1 className="mb-10 text-5xl font-bold text-white">
-        Meus Produtos
-      </h1>
+    <div className="space-y-8 p-8">
+      <PageHeader
+        title="Meus Produtos"
+        description="Gerencie seu catálogo inteligente."
+        badge="Marketplace"
+      />
 
-      <div className="mb-8">
-        <input
-          type="text"
-          placeholder="🔍 Buscar produto..."
-          value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
-          className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-white placeholder:text-zinc-500 focus:border-orange-500 focus:outline-none"
-        />
-      </div>
+      <ProductDashboard
+        totalProducts={totalProducts}
+        activeProducts={activeProducts}
+        totalStock={totalStock}
+        estimatedProfit={
+          estimatedProfit
+        }
+      />
 
-      <div className="mb-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <Card hover={false}>
+        <div className="relative">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+          />
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-zinc-400">
-            Produtos
-          </p>
-
-          <h2 className="mt-3 text-4xl font-bold text-white">
-            {totalProducts}
-          </h2>
+          <input
+            type="text"
+            placeholder="Buscar produto..."
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            className="
+              w-full
+              rounded-2xl
+              border
+              border-zinc-800
+              bg-zinc-950
+              py-4
+              pl-12
+              pr-4
+              text-white
+              outline-none
+              transition
+              focus:border-orange-500
+            "
+          />
         </div>
+      </Card>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-zinc-400">
-            Ativos
-          </p>
-
-          <h2 className="mt-3 text-4xl font-bold text-green-500">
-            {activeProducts}
-          </h2>
-        </div>
-
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-zinc-400">
-            Estoque
-          </p>
-
-          <h2 className="mt-3 text-4xl font-bold text-white">
-            {totalStock}
-          </h2>
-        </div>
-
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-zinc-400">
-            Lucro Estimado
-          </p>
-
-          <h2 className="mt-3 text-4xl font-bold text-green-500">
-            R$ {estimatedProfit.toFixed(2)}
-          </h2>
-        </div>
-
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {filteredProducts.map((product) => {
-          const sellPrice =
-            product.customPrice ??
-            product.marketplaceProduct.suggestedPrice
-
-          const profit =
-            sellPrice -
-            product.marketplaceProduct.costPrice
-                      return (
-            <div
+      <div className="grid gap-8 lg:grid-cols-3">
+        {filteredProducts.map(
+          (product) => (
+            <ProductCard
               key={product.id}
-              className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 transition hover:border-orange-500"
-            >
-              <img
-                src={product.marketplaceProduct.image || ''}
-                alt={product.marketplaceProduct.title}
-                className="h-64 w-full object-cover"
-              />
-
-              <div className="p-6">
-
-                <h2 className="text-xl font-bold text-white">
-                  {product.marketplaceProduct.title}
-                </h2>
-
-                <p className="mt-3 line-clamp-3 text-zinc-400">
-                  {product.marketplaceProduct.description}
-                </p>
-
-                <div className="mt-6 flex items-center justify-between">
-
-                  <div>
-                    <p className="text-sm text-zinc-500">
-                      Venda
-                    </p>
-
-                    <p className="text-3xl font-bold text-green-500">
-                      R$ {sellPrice}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl bg-green-500/10 px-4 py-2">
-                    <p className="text-xs text-green-400">
-                      Lucro
-                    </p>
-
-                    <p className="font-bold text-green-500">
-                      R$ {profit.toFixed(2)}
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="mt-6 space-y-2">
-
-                  <p className="text-zinc-400">
-  Fornecedor:
-  <span className="ml-2 font-bold text-white">
-    {product.marketplaceProduct.supplier.companyName}
-  </span>
-</p>
-
-                  <p className="text-zinc-400">
-                    Sugerido:
-                    <span className="ml-2 font-bold text-white">
-                      R$ {product.marketplaceProduct.suggestedPrice}
-                    </span>
-                  </p>
-
-                  <p className="text-zinc-400">
-                    Estoque:
-                    <span className="ml-2 font-bold text-white">
-                      {product.marketplaceProduct.stock}
-                    </span>
-                  </p>
-
-                  <p className="text-zinc-400">
-                    Status:
-                    <span
-                      className={`ml-2 font-bold ${
-                        product.active
-                          ? 'text-green-500'
-                          : 'text-red-500'
-                      }`}
-                    >
-                      {product.active
-                        ? 'Ativo'
-                        : 'Inativo'}
-                    </span>
-                  </p>
-
-                </div>
-
-                <div className="mt-6">
-
-                  <label className="mb-2 block text-sm text-zinc-400">
-                    Seu preço
-                  </label>
-
-                  <input
-                    type="number"
-                    defaultValue={sellPrice}
-                    className="w-full rounded-xl border border-zinc-700 bg-black p-3 text-white"
-                    onBlur={(e) =>
-                      savePrice(
-                        product.id,
-                        Number(e.target.value)
-                      )
-                    }
-                  />
-
-                </div>
-
-                <div className="mt-6 space-y-3">
-
-  <Link
-  href={`/dashboard/publish?id=${product.id}`}
->
-  <button className="w-full rounded-xl bg-green-600 py-3 font-bold text-white transition hover:bg-green-500">
-    🚀 Preparar Publicação
-  </button>
-</Link>
-
-  <button
-    onClick={() =>
-      removeProduct(product.id)
-    }
-    className="w-full rounded-xl bg-red-600 py-3 font-bold text-white transition hover:bg-red-500"
-  >
-    🗑️ Remover do Catálogo
-  </button>
-
-</div>
-
-              </div>
-            </div>
+              product={product}
+              onSavePrice={savePrice}
+              onRemove={removeProduct}
+              calculateHealth={
+                calculateHealth
+              }
+              getHealthVariant={
+                getHealthVariant
+              }
+            />
           )
-                  })}
+        )}
       </div>
+
+      {filteredProducts.length ===
+        0 && (
+        <Card
+          hover={false}
+          className="col-span-full py-20"
+        >
+          <div className="flex flex-col items-center justify-center text-center">
+            <Package
+              size={56}
+              className="mb-6 text-zinc-600"
+            />
+
+            <h2 className="text-2xl font-bold text-white">
+              Nenhum produto encontrado
+            </h2>
+
+            <p className="mt-3 max-w-md text-zinc-400">
+              Tente alterar sua busca ou
+              adicione novos produtos ao
+              seu catálogo.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      <Card hover={false}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">
+              Resumo Inteligente
+            </h2>
+
+            <p className="mt-2 text-zinc-400">
+              Visão geral da qualidade do
+              catálogo.
+            </p>
+          </div>
+
+          <Brain
+            size={34}
+            className="text-orange-500"
+          />
+        </div>
+
+        <div className="mt-8 grid gap-6 md:grid-cols-4">
+          <div>
+            <p className="text-sm text-zinc-500">
+              Produtos
+            </p>
+
+            <h3 className="mt-2 text-3xl font-bold text-white">
+              {totalProducts}
+            </h3>
+          </div>
+
+          <div>
+            <p className="text-sm text-zinc-500">
+              Ativos
+            </p>
+
+            <h3 className="mt-2 text-3xl font-bold text-green-500">
+              {activeProducts}
+            </h3>
+          </div>
+
+          <div>
+            <p className="text-sm text-zinc-500">
+              Estoque
+            </p>
+
+            <h3 className="mt-2 text-3xl font-bold text-sky-400">
+              {totalStock}
+            </h3>
+          </div>
+
+          <div>
+            <p className="text-sm text-zinc-500">
+              Lucro Estimado
+            </p>
+
+            <h3 className="mt-2 text-3xl font-bold text-emerald-500">
+              R${' '}
+              {estimatedProfit.toFixed(
+                2
+              )}
+            </h3>
+          </div>
+        </div>
+      </Card>
+
+      <div className="h-8" />
     </div>
   )
 }
