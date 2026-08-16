@@ -2,133 +2,286 @@
 
 import { useState } from 'react'
 
+import PageHeader from '@/components/ui/PageHeader'
+import ProductForm from '@/components/dashboard/products/ProductForm'
+
 export default function NewProductPage() {
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('')
   const [image, setImage] = useState('')
 
+  const [brand, setBrand] = useState('')
+  const [model, setModel] = useState('')
+
+  const [salePrice, setSalePrice] = useState('')
+  const [costPrice, setCostPrice] = useState('')
+
+  const [sku, setSku] = useState('')
+  const [ean, setEan] = useState('')
+  const [stock, setStock] = useState('')
+
+  const [weight, setWeight] = useState('')
+  const [height, setHeight] = useState('')
+  const [width, setWidth] = useState('')
+  const [length, setLength] = useState('')
+
+  const [shortDescription, setShortDescription] =
+    useState('')
+
+  const [description, setDescription] =
+    useState('')
+
+  const [isAnalyzing] = useState(false)
+
+  const [healthScore] =
+    useState<number>()
+
+  const [seoScore] =
+    useState<number>()
+
+  const [suggestedTitle] =
+    useState('')
+
+  const [suggestedCategory] =
+    useState('')
+
+  const [suggestedPrice] =
+    useState<number>()
+
+  const [suggestedDescription] =
+    useState('')
+
   async function handleUpload(
-    e: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>
   ) {
-    const file = e.target.files?.[0]
+    const file =
+      event.target.files?.[0]
 
-    if (!file) return
+    if (!file) {
+      return
+    }
 
-    const formData = new FormData()
+    const formData =
+      new FormData()
 
-    formData.append('file', file)
+    formData.append(
+      'file',
+      file
+    )
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    })
+    try {
+      const response =
+        await fetch(
+          '/api/upload',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        )
 
-    const data = await response.json()
+      const data =
+        await response.json()
 
-    setImage(data.url)
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            'Erro ao enviar imagem.'
+        )
+      }
+
+      setImage(
+        data.url ?? ''
+      )
+    } catch (error) {
+      console.error(error)
+
+      alert(
+        'Erro ao enviar imagem.'
+      )
+    }
   }
 
   async function handleCreateProduct() {
-    const response = await fetch('/api/products', {
-      method: 'POST',
+    try {
+      const response =
+        await fetch(
+          '/api/products',
+          {
+            method: 'POST',
 
-      headers: {
-        'Content-Type': 'application/json',
-      },
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
 
-      body: JSON.stringify({
-        title,
-        price,
-        category,
-        image,
-      }),
-    })
+            body: JSON.stringify({
+              title,
+              price,
+              costPrice,
+              category,
+              image,
+              stock,
+              description,
+              shortDescription,
+              sku,
+              ean,
+              brand,
+              model,
+              weight,
+              height,
+              width,
+              length,
+            }),
+          }
+        )
 
-    if (response.ok) {
-      alert('Produto criado com sucesso!')
+      const data =
+        await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            'Erro ao criar produto.'
+        )
+      }
+
+      alert(
+        'Produto criado com sucesso!'
+      )
 
       setTitle('')
       setPrice('')
       setCategory('')
       setImage('')
+      setBrand('')
+      setModel('')
+      setSalePrice('')
+      setCostPrice('')
+      setSku('')
+      setEan('')
+      setStock('')
+      setWeight('')
+      setHeight('')
+      setWidth('')
+      setLength('')
+      setShortDescription('')
+      setDescription('')
+    } catch (error) {
+      console.error(error)
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Erro ao criar produto.'
+      )
     }
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="mb-8 text-4xl font-bold">
-        Novo Produto
-      </h1>
+    <div className="space-y-8 p-8">
+      <PageHeader
+        title="Novo Produto"
+        description="Cadastre um novo produto para o seu catálogo inteligente."
+        badge="Produtos"
+      />
 
-      <div className="rounded-2xl bg-white p-8 shadow">
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Nome do Produto
-          </label>
-
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Preço
-          </label>
-
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Categoria
-          </label>
-
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-xl border p-4 text-black"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 block font-bold text-black">
-            Imagem
-          </label>
-
-          <input
-            type="file"
-            onChange={handleUpload}
-            className="w-full text-black"
-          />
-
-          {image && (
-            <img
-              src={image}
-              alt=""
-              className="mt-4 h-40 rounded-xl object-cover"
-            />
-          )}
-        </div>
-
-        <button
-          onClick={handleCreateProduct}
-          className="rounded-2xl bg-orange-500 px-6 py-4 font-bold text-white"
-        >
-          Salvar Produto
-        </button>
-      </div>
+      <ProductForm
+        title={title}
+        category={category}
+        price={price}
+        image={image}
+        brand={brand}
+        model={model}
+        salePrice={salePrice}
+        costPrice={costPrice}
+        sku={sku}
+        ean={ean}
+        stock={stock}
+        weight={weight}
+        height={height}
+        width={width}
+        length={length}
+        shortDescription={
+          shortDescription
+        }
+        description={description}
+        isAnalyzing={
+          isAnalyzing
+        }
+        healthScore={
+          healthScore
+        }
+        seoScore={
+          seoScore
+        }
+        suggestedTitle={
+          suggestedTitle
+        }
+        suggestedCategory={
+          suggestedCategory
+        }
+        suggestedPrice={
+          suggestedPrice
+        }
+        suggestedDescription={
+          suggestedDescription
+        }
+        onTitleChange={
+          setTitle
+        }
+        onCategoryChange={
+          setCategory
+        }
+        onPriceChange={
+          setPrice
+        }
+        onBrandChange={
+          setBrand
+        }
+        onModelChange={
+          setModel
+        }
+        onSalePriceChange={
+          setSalePrice
+        }
+        onCostPriceChange={
+          setCostPrice
+        }
+        onSkuChange={
+          setSku
+        }
+        onEanChange={
+          setEan
+        }
+        onStockChange={
+          setStock
+        }
+        onWeightChange={
+          setWeight
+        }
+        onHeightChange={
+          setHeight
+        }
+        onWidthChange={
+          setWidth
+        }
+        onLengthChange={
+          setLength
+        }
+        onShortDescriptionChange={
+          setShortDescription
+        }
+        onDescriptionChange={
+          setDescription
+        }
+        onUpload={
+          handleUpload
+        }
+        onSave={
+          handleCreateProduct
+        }
+      />
     </div>
   )
 }
-
