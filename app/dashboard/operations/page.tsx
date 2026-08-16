@@ -1,4 +1,6 @@
 import prisma from '@/lib/prisma'
+
+import Card from '@/components/ui/Card'
 import OperationsLogs from '@/components/dashboard/operations/OperationsLogs'
 
 export default async function OperationsPage() {
@@ -37,7 +39,7 @@ export default async function OperationsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+        <Card>
           <p className="text-zinc-400">
             Jobs Processados
           </p>
@@ -45,9 +47,9 @@ export default async function OperationsPage() {
           <h2 className="mt-3 text-4xl font-bold text-white">
             {processedJobs}
           </h2>
-        </div>
+        </Card>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+        <Card variant="warning">
           <p className="text-zinc-400">
             Jobs Pendentes
           </p>
@@ -55,9 +57,9 @@ export default async function OperationsPage() {
           <h2 className="mt-3 text-4xl font-bold text-yellow-400">
             0
           </h2>
-        </div>
+        </Card>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+        <Card variant="error">
           <p className="text-zinc-400">
             Falhas
           </p>
@@ -65,9 +67,9 @@ export default async function OperationsPage() {
           <h2 className="mt-3 text-4xl font-bold text-red-500">
             {failedJobs}
           </h2>
-        </div>
+        </Card>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+        <Card variant="success">
           <p className="text-zinc-400">
             Integrações Online
           </p>
@@ -75,7 +77,7 @@ export default async function OperationsPage() {
           <h2 className="mt-3 text-4xl font-bold text-green-500">
             {onlineIntegrations}
           </h2>
-        </div>
+        </Card>
       </div>
 
       <OperationsLogs />
