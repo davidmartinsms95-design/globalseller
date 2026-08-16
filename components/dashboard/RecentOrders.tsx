@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import Badge from '@/components/ui/Badge'
+import Card from '@/components/ui/Card'
+import EmptyState from '@/components/ui/EmptyState'
 
 interface Order {
   id: string
@@ -9,60 +11,60 @@ interface Order {
   createdAt: string
 }
 
-export default function RecentOrders() {
-  const [orders, setOrders] = useState<Order[]>([])
+interface RecentOrdersProps {
+  orders: Order[]
+}
 
-  useEffect(() => {
-    async function loadOrders() {
-      const response = await fetch('/api/orders')
-      const data = await response.json()
-
-      setOrders(data)
-    }
-
-    loadOrders()
-  }, [])
-
+export default function RecentOrders({
+  orders,
+}: RecentOrdersProps) {
   return (
-    <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+    <Card>
       <h2 className="mb-6 text-2xl font-bold text-white">
         Últimos Pedidos
       </h2>
 
-      <div className="space-y-4">
-        {orders.slice(0, 5).map((order) => (
-          <div
-            key={order.id}
-            className="flex items-center justify-between rounded-xl border border-zinc-800 p-4"
-          >
-            <div>
-              <p className="font-semibold text-white">
-                Pedido #{order.id.slice(-6)}
-              </p>
+      {orders.length === 0 ? (
+        <EmptyState
+          title="Nenhum pedido"
+          description="Quando houver vendas elas aparecerão aqui."
+        />
+      ) : (
+        <div className="space-y-4">
+          {orders
+            .slice(0, 5)
+            .map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+              >
+                <div>
+                  <p className="font-semibold text-white">
+                    Pedido #{order.id.slice(-6)}
+                  </p>
 
-              <p className="text-sm text-zinc-400">
-                {new Date(order.createdAt).toLocaleDateString('pt-BR')}
-              </p>
-            </div>
+                  <p className="text-sm text-zinc-500">
+                    {new Date(
+                      order.createdAt,
+                    ).toLocaleDateString(
+                      'pt-BR',
+                    )}
+                  </p>
+                </div>
 
-            <div className="text-right">
-              <p className="font-bold text-green-500">
-                R$ {order.amount.toFixed(2)}
-              </p>
+                <div className="text-right">
+                  <p className="font-bold text-green-500">
+                    R$ {order.amount.toFixed(2)}
+                  </p>
 
-              <p className="text-sm text-zinc-400">
-                {order.status}
-              </p>
-            </div>
-          </div>
-        ))}
-
-        {orders.length === 0 && (
-          <p className="text-zinc-500">
-            Nenhum pedido encontrado.
-          </p>
-        )}
-      </div>
-    </div>
+                  <Badge>
+                    {order.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </Card>
   )
 }
