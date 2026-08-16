@@ -1,39 +1,20 @@
 import { NextResponse } from 'next/server'
+
 import prisma from '../../../../lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../../../../lib/auth'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
 export async function GET() {
   try {
-    const session =
-      await getServerSession(authOptions)
+    const user =
+      await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           error: 'Não autorizado',
         },
         {
           status: 401,
-        }
-      )
-    }
-
-    const user =
-      await prisma.user.findUnique({
-        where: {
-          email: session.user.email,
-        },
-      })
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          error:
-            'Usuário não encontrado',
-        },
-        {
-          status: 404,
         }
       )
     }
