@@ -1,20 +1,17 @@
 import { NextResponse } from 'next/server'
 
 import prisma from '../../../../../lib/prisma'
+import { getCurrentUser } from '@/lib/getCurrentUser'
 
-import { getServerSession } from 'next-auth'
-
-import { authOptions } from '../../../../../lib/auth'
-
-import crypto from 'crypto'
+import {
+  shopeeClient,
+} from '@/lib/shopee/shopeeClient'
 
 export async function GET() {
   try {
-    const session = await getServerSession(
-      authOptions
-    )
+    const user = await getCurrentUser()
 
-    if (!session?.user?.email) {
+    if (!user) {
       return NextResponse.json(
         {
           error: 'Não autorizado',
@@ -25,21 +22,18 @@ export async function GET() {
       )
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
+    const integration =
+      await prisma.integration.findFirst({
+        where: {
+          userId: user.id,
+          provider: 'shopee',
+        },
+      })
 
-      include: {
-        integrations: true,
-      },
-    })
-
-    if (!user) {
+    if (!integration) {
       return NextResponse.json(
         {
-          error:
-            'Usuário não encontrado',
+          error: 'Shopee não conectada',
         },
         {
           status: 404,
@@ -47,21 +41,14 @@ export async function GET() {
       )
     }
 
-    const integration =
-      user.integrations.find(
-        (item) =>
-          item.provider ===
-          'shopee'
-      )
-
-    if (!integration) {
+    if (!integration.accessToken) {
       return NextResponse.json(
         {
           error:
-            'Shopee não conectada',
+            'Access Token da Shopee não encontrado.',
         },
         {
-          status: 404,
+          status: 400,
         }
       )
     }
@@ -70,84 +57,83 @@ export async function GET() {
       Credenciais Shopee
     */
 
-    const partnerId =
-      process.env.SHOPEE_PARTNER_ID!
+    const response =
+      await shopeeClient.get({
+        path:
+          '/api/v2/product/get_item_list',
 
-    const partnerKey =
-      process.env.SHOPEE_PARTNER_KEY!
+        accessToken:
+          integration.accessToken,
 
-    const timestamp = Math.floor(
-      Date.now() / 1000
-    )
+        shopId:
+          integration.externalUserId!,
+      })
 
-    const path =
-      '/api/v2/product/get_item_list'
+    const data =
+      await response.json()
 
-    /*
-      Assinatura Shopee
-    */
+    const itemIds =
+      Array.isArray(data.response?.item)
+        ? data.response.item.map(
+            (item: any) =>
+              item.item_id
+          )
+        : []
 
-    const baseString =
-      `${partnerId}${path}${timestamp}${integration.accessToken}${integration.externalUserId}`
-
-    const sign = crypto
-      .createHmac(
-        'sha256',
-        partnerKey
+    if (
+      Array.isArray(
+        data.response?.item
       )
-      .update(baseString)
-      .digest('hex')
+    ) {
+      for (
+        const item of
+        data.response.item
+      ) {
+        await prisma.product.upsert({
+          where: {
+            marketplaceId:
+              String(item.item_id),
+          },
 
-    /*
-      Buscar produtos Shopee
-    */
+          update: {
+            title:
+              item.item_name,
 
-    const response = await fetch(
-      `https://partner.shopeemobile.com${path}?partner_id=${partnerId}&timestamp=${timestamp}&access_token=${integration.accessToken}&shop_id=${integration.externalUserId}&sign=${sign}&offset=0&page_size=50`,
-      {
-        method: 'GET',
+            stock:
+              item.stock ?? 0,
+
+            marketplace:
+              'shopee',
+          },
+
+          create: {
+            title:
+              item.item_name,
+
+            price: 0,
+
+            stock:
+              item.stock ?? 0,
+
+            marketplace:
+              'shopee',
+
+            marketplaceId:
+              String(item.item_id),
+
+            userId:
+              user.id,
+          },
+        })
       }
-    )
+    }
 
-    const data = await response.json()
-    const itemIds = Array.isArray(data.response?.item)
-  ? data.response.item.map(
-      (item: any) => item.item_id
-    )
-  : []
-    if (Array.isArray(data.response?.item)) {
-  for (const item of data.response.item) {
-    await prisma.product.upsert({
-      where: {
-        marketplaceId: String(item.item_id),
-      },
-
-      update: {
-        title: item.item_name,
-        stock: item.stock ?? 0,
-        marketplace: 'shopee',
-      },
-
-      create: {
-        title: item.item_name,
-        price: 0,
-        stock: item.stock ?? 0,
-
-        marketplace: 'shopee',
-
-        marketplaceId: String(item.item_id),
-
-        userId: user.id,
-      },
-    })
-  }
-}
-if (itemIds.length > 0) {
-  console.log(
-    'Itens encontrados na Shopee:',
-    itemIds
-  )
-}
+    if (itemIds.length > 0) {
+      console.log(
+        'Itens encontrados na Shopee:',
+        itemIds
+      )
+    }
 
     console.log(
       'PRODUTOS SHOPEE:',
@@ -169,4 +155,3 @@ if (itemIds.length > 0) {
     )
   }
 }
-
