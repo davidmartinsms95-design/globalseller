@@ -15,9 +15,11 @@ interface Product {
 }
 
 export default function PublishPage() {
-  const searchParams = useSearchParams()
+  const searchParams =
+    useSearchParams()
 
-  const productId = searchParams.get('id')
+  const productId =
+    searchParams.get('id')
 
   const [product, setProduct] =
     useState<Product | null>(null)
@@ -36,21 +38,27 @@ export default function PublishPage() {
       }
 
       try {
-        const response = await fetch(
-          `/api/products/${productId}`
-        )
+        const response =
+          await fetch(
+            `/api/products/${productId}`
+          )
 
         if (!response.ok) {
           throw new Error(
-            'Erro ao carregar produto'
+            'Erro ao carregar produto.'
           )
         }
 
-        const data = await response.json()
+        const data =
+          await response.json()
 
         setProduct(data)
       } catch (error) {
-        console.error(error)
+        console.error(
+          error
+        )
+
+        setProduct(null)
       } finally {
         setLoading(false)
       }
@@ -60,26 +68,30 @@ export default function PublishPage() {
   }, [productId])
 
   async function publish() {
-    if (!product) return
+    if (!product || publishing) {
+      return
+    }
 
     try {
       setPublishing(true)
 
-      const response = await fetch(
-        '/api/publish',
-        {
-          method: 'POST',
+      const response =
+        await fetch(
+          '/api/publish',
+          {
+            method: 'POST',
 
-          headers: {
-            'Content-Type':
-              'application/json',
-          },
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
 
-          body: JSON.stringify({
-            productId: product.id,
-          }),
-        }
-      )
+            body: JSON.stringify({
+              productId:
+                product.id,
+            }),
+          }
+        )
 
       const data =
         await response.json()
@@ -97,10 +109,12 @@ export default function PublishPage() {
         'Produto publicado com sucesso!'
       )
     } catch (error) {
-      console.error(error)
+      console.error(
+        error
+      )
 
       alert(
-        'Erro inesperado.'
+        'Erro inesperado ao publicar produto.'
       )
     } finally {
       setPublishing(false)
@@ -123,26 +137,28 @@ export default function PublishPage() {
     )
   }
 
-  const score =
-    calculateProductScore(product)
+  const {
+    score,
+    suggestions,
+  } = calculateProductScore(
+    product
+  )
 
   return (
     <div className="space-y-8">
-
       <div>
         <h1 className="text-5xl font-bold text-white">
           Central de Publicação
         </h1>
 
         <p className="mt-3 text-zinc-400">
-          Revise todas as informações antes da publicação.
+          Revise todas as informações
+          antes da publicação.
         </p>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-2">
-
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-
           {product.image ? (
             <img
               src={product.image}
@@ -155,7 +171,7 @@ export default function PublishPage() {
             </div>
           )}
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold text-white">
             {product.title}
           </h2>
 
@@ -163,61 +179,77 @@ export default function PublishPage() {
             {product.description ??
               'Sem descrição.'}
           </p>
-
         </div>
 
         <div className="space-y-6">
-
           <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-2xl font-bold text-white">
               Score do anúncio
             </h2>
 
             <div className="mt-6 h-5 overflow-hidden rounded-full bg-zinc-800">
-
               <div
                 className="h-full rounded-full bg-green-500 transition-all duration-700"
                 style={{
                   width: `${score}%`,
                 }}
               />
-
             </div>
 
             <p className="mt-4 text-green-400">
-              Qualidade estimada: {score}%
+              Qualidade estimada:{' '}
+              {score}%
             </p>
-
           </div>
 
           <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-2xl font-bold text-white">
               Resumo
             </h2>
 
-            <div className="mt-6 space-y-3">
-
+            <div className="mt-6 space-y-3 text-zinc-300">
               <p>
-                💰 Preço:
-                <strong>
-                  {' '}
-                  R$ {product.price.toFixed(2)}
+                💰 Preço:{' '}
+                <strong className="text-white">
+                  R${' '}
+                  {product.price.toFixed(
+                    2
+                  )}
                 </strong>
               </p>
 
               <p>
-                📦 Estoque:
-                <strong>
-                  {' '}
+                📦 Estoque:{' '}
+                <strong className="text-white">
                   {product.stock}
                 </strong>
               </p>
-
             </div>
-
           </div>
+
+          {suggestions.length > 0 && (
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
+              <h2 className="text-2xl font-bold text-white">
+                Recomendações
+              </h2>
+
+              <div className="mt-6 space-y-3">
+                {suggestions.map(
+                  (
+                    suggestion,
+                    index
+                  ) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl bg-black p-4 text-zinc-300"
+                    >
+                      {suggestion}
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={publish}
@@ -228,11 +260,8 @@ export default function PublishPage() {
               ? 'Publicando...'
               : '🚀 Publicar Agora'}
           </button>
-
         </div>
-
       </div>
-
     </div>
   )
 }
