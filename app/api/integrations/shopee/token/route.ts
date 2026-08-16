@@ -1,54 +1,56 @@
 import { NextResponse } from 'next/server'
 
 import prisma from '../../../../../lib/prisma'
-
-import crypto from 'crypto'
+import { getCurrentUser } from '../../../../../lib/getCurrentUser'
+import { generateShopeeSignature } from '../../../../../lib/shopee/sign'
 
 export async function POST(req: Request) {
   try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: 'Não autorizado',
+        },
+        {
+          status: 401,
+        }
+      )
+    }
+
     const body = await req.json()
 
     const {
       code,
       shopId,
-      userId,
     } = body
 
-    /*
-      Credenciais Shopee
-    */
-
-    const partnerId =
-      process.env.SHOPEE_PARTNER_ID!
-
-    const partnerKey =
-      process.env.SHOPEE_PARTNER_KEY!
-
-    const timestamp = Math.floor(
-      Date.now() / 1000
-    )
-
-    /*
-      Assinatura Shopee
-    */
+    if (!code || !shopId) {
+      return NextResponse.json(
+        {
+          error:
+            'Código ou loja Shopee não informado.',
+        },
+        {
+          status: 400,
+        }
+      )
+    }
 
     const path =
       '/api/v2/auth/token/get'
 
-    const baseString =
-      `${partnerId}${path}${timestamp}`
-
-    const sign = crypto
-      .createHmac(
-        'sha256',
-        partnerKey
-      )
-      .update(baseString)
-      .digest('hex')
-
-    /*
-      Buscar token Shopee
-    */
+    const {
+      partnerId,
+      sign,
+      timestamp,
+    } = generateShopeeSignature({
+      path,
+      timestamp: Math.floor(
+        Date.now() / 1000
+      ),
+    })
 
     const response = await fetch(
       `https://partner.shopeemobile.com${path}?partner_id=${partnerId}&timestamp=${timestamp}&sign=${sign}`,
@@ -79,16 +81,28 @@ export async function POST(req: Request) {
       data
     )
 
-    /*
-      Salvar integração
-    */
+    if (
+      !response.ok ||
+      !data.access_token
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            data.message ??
+            'Erro ao obter token da Shopee',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
 
     await prisma.integration.upsert({
       where: {
         provider_userId: {
           provider: 'shopee',
 
-          userId,
+          userId: user.id,
         },
       },
 
@@ -115,7 +129,7 @@ export async function POST(req: Request) {
         externalUserId:
           String(shopId),
 
-        userId,
+        userId: user.id,
       },
     })
 
@@ -123,12 +137,15 @@ export async function POST(req: Request) {
       success: true,
     })
   } catch (error) {
-    console.log(error)
+    console.error(
+      '[SHOPEE TOKEN]',
+      error
+    )
 
     return NextResponse.json(
       {
         error:
-          'Erro gerar token Shopee',
+          'Erro ao gerar token da Shopee',
       },
       {
         status: 500,
@@ -136,4 +153,3 @@ export async function POST(req: Request) {
     )
   }
 }
-
