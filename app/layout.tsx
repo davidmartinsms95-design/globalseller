@@ -1,8 +1,10 @@
 import './globals.css'
 
+import Script from 'next/script'
+
 import Providers from './providers'
 
-import Script from 'next/script'
+import AppToaster from '@/components/ui/Toaster'
 
 export const metadata = {
   title: 'GlobalSeller — Plataforma SaaS de Vendas',
@@ -46,6 +48,8 @@ export default function RootLayout({
       <body>
         <Providers>
           {children}
+
+          <AppToaster />
         </Providers>
 
         <Script
@@ -70,4 +74,3 @@ export default function RootLayout({
     </html>
   )
 }
-
