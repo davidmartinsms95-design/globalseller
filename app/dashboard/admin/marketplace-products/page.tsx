@@ -2,9 +2,19 @@
 
 import { useEffect, useState } from 'react'
 
-import MarketplaceProductTable from '@/components/admin/marketplace-products/MarketplaceProductTable'
-import MarketplaceProductSearch from '@/components/admin/marketplace-products/MarketplaceProductSearch'
+import {
+  History,
+  Package,
+  Upload,
+} from 'lucide-react'
+
+import MarketplaceImport from '@/components/admin/marketplace-products/MarketplaceImport'
+import MarketplaceImportHistory from '@/components/admin/marketplace-products/MarketplaceImportHistory'
 import MarketplaceProductForm from '@/components/admin/marketplace-products/MarketplaceProductForm'
+import MarketplaceProductSearch from '@/components/admin/marketplace-products/MarketplaceProductSearch'
+import MarketplaceProductTable from '@/components/admin/marketplace-products/MarketplaceProductTable'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { toast } from 'sonner'
 
 interface Supplier {
   id: string
@@ -20,22 +30,46 @@ interface Product {
   stock: number
   image: string | null
   supplierId: string
+
   supplier: {
     companyName: string
   }
 }
+
 export default function MarketplaceProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [products, setProducts] =
+    useState<Product[]>([])
 
-  const [loading, setLoading] = useState(true)
+  const [suppliers, setSuppliers] =
+    useState<Supplier[]>([])
 
-  const [search, setSearch] = useState('')
+  const [loading, setLoading] =
+    useState(true)
 
-  const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] =
+    useState('')
+
+  const [showForm, setShowForm] =
+    useState(false)
 
   const [selectedProduct, setSelectedProduct] =
     useState<Product | null>(null)
+
+  const [activeTab, setActiveTab] =
+    useState<
+      'products' |
+      'import' |
+      'history'
+    >('products')
+
+  const [confirmOpen, setConfirmOpen] =
+    useState(false)
+
+  const [productToDelete, setProductToDelete] =
+    useState<Product | null>(null)
+
+  const [deleting, setDeleting] =
+    useState(false)
 
   async function loadProducts() {
     try {
@@ -43,9 +77,12 @@ export default function MarketplaceProductsPage() {
         '/api/admin/marketplace-products'
       )
 
-      const data = await response.json()
+      const data =
+        await response.json()
 
-      setProducts(data.products || [])
+      setProducts(
+        data.products || []
+      )
     } catch (error) {
       console.error(error)
     } finally {
@@ -59,9 +96,12 @@ export default function MarketplaceProductsPage() {
         '/api/admin/suppliers'
       )
 
-      const data = await response.json()
+      const data =
+        await response.json()
 
-      setSuppliers(data.suppliers || [])
+      setSuppliers(
+        data.suppliers || []
+      )
     } catch (error) {
       console.error(error)
     }
@@ -71,22 +111,33 @@ export default function MarketplaceProductsPage() {
     loadProducts()
     loadSuppliers()
   }, [])
-    async function deleteProduct(id: string) {
-    const confirmDelete = confirm(
-      'Deseja realmente excluir este produto?'
+
+  async function deleteProduct(id: string) {
+    const product = products.find(
+      (item) => item.id === id
     )
 
-    if (!confirmDelete) return
+    if (!product) return
+
+    setProductToDelete(product)
+    setConfirmOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!productToDelete) return
+
+    setDeleting(true)
 
     try {
       const response = await fetch(
-        `/api/admin/marketplace-products/${id}`,
+        `/api/admin/marketplace-products/${productToDelete.id}`,
         {
           method: 'DELETE',
         }
       )
 
-      const data = await response.json()
+      const data =
+        await response.json()
 
       if (!response.ok) {
         throw new Error(data.error)
@@ -94,15 +145,26 @@ export default function MarketplaceProductsPage() {
 
       await loadProducts()
 
-      alert('Produto removido com sucesso!')
+      toast.success(
+        'Produto excluído com sucesso!'
+      )
+
+      setConfirmOpen(false)
+      setProductToDelete(null)
     } catch (error) {
       console.error(error)
 
-      alert('Erro ao excluir produto.')
+      toast.error(
+        'Erro ao excluir produto.'
+      )
+    } finally {
+      setDeleting(false)
     }
   }
 
-  function handleEdit(product: Product) {
+  function handleEdit(
+    product: Product
+  ) {
     setSelectedProduct(product)
     setShowForm(true)
   }
@@ -123,7 +185,8 @@ export default function MarketplaceProductsPage() {
     setShowForm(false)
     setSelectedProduct(null)
   }
-    return (
+
+  return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
@@ -134,20 +197,91 @@ export default function MarketplaceProductsPage() {
           <p className="mt-2 text-zinc-400">
             Gerencie todos os produtos disponíveis para os revendedores.
           </p>
+
+          <div className="mt-8 flex flex-wrap gap-4">
+            <button
+              onClick={() =>
+                setActiveTab('products')
+              }
+              className={`flex items-center gap-2 rounded-xl px-6 py-3 font-semibold transition-all duration-200 ${
+                activeTab === 'products'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                  : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              <Package size={18} />
+              Produtos
+            </button>
+
+            <button
+              onClick={() =>
+                setActiveTab('import')
+              }
+              className={`flex items-center gap-2 rounded-xl px-6 py-3 font-semibold transition-all duration-200 ${
+                activeTab === 'import'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                  : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              <Upload size={18} />
+              Importações
+            </button>
+
+            <button
+              onClick={() =>
+                setActiveTab('history')
+              }
+              className={`flex items-center gap-2 rounded-xl px-6 py-3 font-semibold transition-all duration-200 ${
+                activeTab === 'history'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                  : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              <History size={18} />
+              Histórico
+            </button>
+          </div>
         </div>
 
-        <button
-          onClick={handleNewProduct}
-          className="rounded-xl bg-orange-500 px-6 py-3 font-bold text-white transition hover:bg-orange-400"
-        >
-          + Novo Produto
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleNewProduct}
+            className="rounded-xl bg-orange-500 px-6 py-3 font-bold text-white transition hover:bg-orange-400"
+          >
+            + Novo Produto
+          </button>
+        </div>
       </div>
 
-      <MarketplaceProductSearch
-        value={search}
-        onChange={setSearch}
-      />
+      {activeTab === 'products' && (
+        <>
+          <MarketplaceProductSearch
+            value={search}
+            onChange={setSearch}
+          />
+
+          <MarketplaceProductTable
+            products={products}
+            loading={loading}
+            search={search}
+            onEdit={handleEdit}
+            onDelete={deleteProduct}
+          />
+        </>
+      )}
+
+      {activeTab === 'import' && (
+        <MarketplaceImport
+          suppliers={suppliers}
+          onSuccess={() => {
+            loadProducts()
+          }}
+        />
+      )}
+
+      {activeTab === 'history' && (
+        <MarketplaceImportHistory />
+      )}
 
       {showForm && (
         <MarketplaceProductForm
@@ -158,13 +292,23 @@ export default function MarketplaceProductsPage() {
         />
       )}
 
-      <MarketplaceProductTable
-        products={products}
-        loading={loading}
-        search={search}
-        onEdit={handleEdit}
-        onDelete={deleteProduct}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Excluir produto"
+        description={
+          productToDelete
+            ? `Tem certeza que deseja excluir "${productToDelete.title}"?`
+            : ''
+        }
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setProductToDelete(null)
+        }}
       />
-          </div>
+    </div>
   )
 }
