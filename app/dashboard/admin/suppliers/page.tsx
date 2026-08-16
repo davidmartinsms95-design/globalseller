@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 import SupplierTable from '@/components/admin/suppliers/SupplierTable'
 import SupplierSearch from '@/components/admin/suppliers/SupplierSearch'
 import SupplierForm from '@/components/admin/suppliers/SupplierForm'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { toast } from 'sonner'
 
 interface Supplier {
   id: string
@@ -18,15 +20,29 @@ interface Supplier {
 }
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [loading, setLoading] = useState(true)
+  const [suppliers, setSuppliers] =
+    useState<Supplier[]>([])
 
-  const [search, setSearch] = useState('')
+  const [loading, setLoading] =
+    useState(true)
 
-  const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] =
+    useState('')
+
+  const [showForm, setShowForm] =
+    useState(false)
 
   const [selectedSupplier, setSelectedSupplier] =
     useState<Supplier | null>(null)
+
+  const [confirmOpen, setConfirmOpen] =
+    useState(false)
+
+  const [supplierToDelete, setSupplierToDelete] =
+    useState<Supplier | null>(null)
+
+  const [deleting, setDeleting] =
+    useState(false)
 
   async function loadSuppliers() {
     setLoading(true)
@@ -36,9 +52,12 @@ export default function SuppliersPage() {
         '/api/admin/suppliers'
       )
 
-      const data = await response.json()
+      const data =
+        await response.json()
 
-      setSuppliers(data.suppliers || [])
+      setSuppliers(
+        data.suppliers || []
+      )
     } catch (error) {
       console.error(error)
     } finally {
@@ -50,22 +69,36 @@ export default function SuppliersPage() {
     loadSuppliers()
   }, [])
 
-  async function deleteSupplier(id: string) {
-    const confirmDelete = confirm(
-      'Deseja realmente excluir este fornecedor?'
-    )
-
-    if (!confirmDelete) return
-
-    try {
-      const response = await fetch(
-        `/api/admin/suppliers/${id}`,
-        {
-          method: 'DELETE',
-        }
+  async function deleteSupplier(
+    id: string
+  ) {
+    const supplier =
+      suppliers.find(
+        (item) => item.id === id
       )
 
-      const data = await response.json()
+    if (!supplier) return
+
+    setSupplierToDelete(supplier)
+    setConfirmOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!supplierToDelete) return
+
+    setDeleting(true)
+
+    try {
+      const response =
+        await fetch(
+          `/api/admin/suppliers/${supplierToDelete.id}`,
+          {
+            method: 'DELETE',
+          }
+        )
+
+      const data =
+        await response.json()
 
       if (!response.ok) {
         throw new Error(data.error)
@@ -73,15 +106,26 @@ export default function SuppliersPage() {
 
       await loadSuppliers()
 
-      alert('Fornecedor removido com sucesso!')
+      toast.success(
+        'Fornecedor removido com sucesso!'
+      )
+
+      setConfirmOpen(false)
+      setSupplierToDelete(null)
     } catch (error) {
       console.error(error)
 
-      alert('Erro ao excluir fornecedor.')
+      toast.error(
+        'Erro ao excluir fornecedor.'
+      )
+    } finally {
+      setDeleting(false)
     }
   }
 
-  function handleEdit(supplier: Supplier) {
+  function handleEdit(
+    supplier: Supplier
+  ) {
     setSelectedSupplier(supplier)
     setShowForm(true)
   }
@@ -105,7 +149,7 @@ export default function SuppliersPage() {
 
   return (
     <div className="space-y-8">
-              <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-white">
             Fornecedores
@@ -144,6 +188,24 @@ export default function SuppliersPage() {
         onDelete={deleteSupplier}
         onEdit={handleEdit}
       />
-          </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Excluir fornecedor"
+        description={
+          supplierToDelete
+            ? `Tem certeza que deseja excluir "${supplierToDelete.companyName}"?`
+            : ''
+        }
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setSupplierToDelete(null)
+        }}
+      />
+    </div>
   )
 }
