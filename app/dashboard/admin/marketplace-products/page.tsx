@@ -1,6 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   History,
@@ -54,6 +58,9 @@ export default function MarketplaceProductsPage() {
 
   const [selectedProduct, setSelectedProduct] =
     useState<Product | null>(null)
+
+  const editFormRef =
+    useRef<HTMLDivElement | null>(null)
 
   const [activeTab, setActiveTab] =
     useState<
@@ -111,6 +118,19 @@ export default function MarketplaceProductsPage() {
     loadProducts()
     loadSuppliers()
   }, [])
+
+  useEffect(() => {
+    if (!showForm) return
+
+    const timeout = setTimeout(() => {
+      editFormRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 100)
+
+    return () => clearTimeout(timeout)
+  }, [showForm, selectedProduct])
 
   async function deleteProduct(id: string) {
     const product = products.find(
@@ -284,12 +304,17 @@ export default function MarketplaceProductsPage() {
       )}
 
       {showForm && (
-        <MarketplaceProductForm
-          product={selectedProduct}
-          suppliers={suppliers}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        <div
+          ref={editFormRef}
+          className="scroll-mt-6"
+        >
+          <MarketplaceProductForm
+            product={selectedProduct}
+            suppliers={suppliers}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </div>
       )}
 
       <ConfirmDialog
