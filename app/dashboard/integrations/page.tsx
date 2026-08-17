@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from 'react'
 
-interface IntegrationStatus {
+interface MarketplaceConnection {
   connected: boolean
   externalUserId: string | null
+}
+
+interface IntegrationStatus {
+  mercadolivre: MarketplaceConnection
+  shopee: MarketplaceConnection
   products: number
   orders: number
 }
@@ -60,7 +65,7 @@ export default function IntegrationsPage() {
             Mercado Livre
           </h2>
 
-          {status?.connected ? (
+          {status?.mercadolivre.connected ? (
             <span className="rounded-full bg-green-500/20 px-4 py-2 font-bold text-green-400">
               Conectado
             </span>
@@ -84,8 +89,8 @@ export default function IntegrationsPage() {
                 </p>
 
                 <h3 className="mt-2 text-lg font-bold text-white">
-                  {status?.externalUserId ||
-                    '-'}
+                  {status?.mercadolivre.externalUserId ||
+  '-'}
                 </h3>
               </div>
 

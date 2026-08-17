@@ -19,11 +19,19 @@ export async function GET() {
       )
     }
 
-    const integration =
+    const mercadolivreIntegration =
       await prisma.integration.findFirst({
         where: {
           userId: user.id,
           provider: 'mercadolivre',
+        },
+      })
+
+    const shopeeIntegration =
+      await prisma.integration.findFirst({
+        where: {
+          userId: user.id,
+          provider: 'shopee',
         },
       })
 
@@ -35,10 +43,24 @@ export async function GET() {
       })
 
     return NextResponse.json({
-      connected: !!integration,
-      externalUserId:
-        integration?.externalUserId || null,
+      mercadolivre: {
+        connected: !!mercadolivreIntegration,
+
+        externalUserId:
+          mercadolivreIntegration?.externalUserId ||
+          null,
+      },
+
+      shopee: {
+        connected: !!shopeeIntegration,
+
+        externalUserId:
+          shopeeIntegration?.externalUserId ||
+          null,
+      },
+
       products,
+
       orders: 0,
     })
   } catch (error) {
