@@ -9,19 +9,21 @@ datasource db {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  name                String
-  email               String               @unique
-  password            String
-  createdAt           DateTime             @default(now())
-  maxProducts         Int                  @default(5)
-  plan                String               @default("free")
-  role                String               @default("reseller")
-  financeTransactions FinanceTransaction[]
-  integrations        Integration[]
-  orders              Order[]
-  products            Product[]
-  resellerProducts    ResellerProduct[]
+  id                   String                @id @default(cuid())
+  name                 String
+  email                String                @unique
+  password             String
+  createdAt            DateTime              @default(now())
+  maxProducts          Int                   @default(5)
+  plan                 String                @default("free")
+  role                 String                @default("reseller")
+  financeTransactions  FinanceTransaction[]
+  integrations         Integration[]
+  orders               Order[]
+  PasswordResetToken   PasswordResetToken[]
+  products             Product[]
+  resellerProducts     ResellerProduct[]
+  subscriptionPayments SubscriptionPayment[]
 }
 
 model Supplier {
@@ -89,34 +91,36 @@ model ResellerProduct {
 }
 
 model Product {
-  id                String           @id @default(cuid())
-  title             String
-  price             Float
-  category          String           @default("Mercado Livre")
-  image             String?
-  createdAt         DateTime         @default(now())
-  userId            String
-  marketplace       String           @default("mercadolivre")
-  marketplaceId     String?          @unique
-  permalink         String?
-  status            String?
-  stock             Int              @default(0)
-  description       String?
-  mlCategoryId      String?
-  resellerProductId String?
-  brand             String?
-  costPrice         Float?
-  ean               String?
-  height            Float?
-  length            Float?
-  model             String?
-  shortDescription  String?
-  sku               String?
-  weight            Float?
-  width             Float?
-  orders            Order[]
-  resellerProduct   ResellerProduct? @relation(fields: [resellerProductId], references: [id])
-  user              User             @relation(fields: [userId], references: [id])
+  id                    String           @id @default(cuid())
+  title                 String
+  price                 Float
+  category              String           @default("Mercado Livre")
+  image                 String?
+  createdAt             DateTime         @default(now())
+  userId                String
+  marketplace           String           @default("mercadolivre")
+  marketplaceId         String?          @unique
+  permalink             String?
+  status                String?
+  stock                 Int              @default(0)
+  description           String?
+  mlCategoryId          String?
+  resellerProductId     String?
+  brand                 String?
+  costPrice             Float?
+  ean                   String?
+  height                Float?
+  length                Float?
+  model                 String?
+  shortDescription      String?
+  sku                   String?
+  weight                Float?
+  width                 Float?
+  removedFromCatalog    Boolean          @default(false)
+  marketplaceAttributes Json?
+  orders                Order[]
+  resellerProduct       ResellerProduct? @relation(fields: [resellerProductId], references: [id])
+  user                  User             @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -201,6 +205,39 @@ model SystemLog {
   createdAt DateTime @default(now())
 
   @@index([service])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model SubscriptionPayment {
+  id                String    @id @default(cuid())
+  userId            String
+  paymentId         String?   @unique
+  externalReference String    @unique @default(cuid())
+  amount            Decimal   @db.Decimal(10, 2)
+  currencyId        String    @default("BRL")
+  status            String    @default("pending")
+  paymentMethod     String?
+  statusDetail      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  approvedAt        DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([status])
   @@index([createdAt])
 }
