@@ -114,7 +114,7 @@ export default function PricingSection() {
             </div>
 
             <Link
-              href="/checkout"
+              href="/login?callbackUrl=%2Fdashboard%2Fplans"
               className="mt-10 block rounded-2xl bg-orange-500 py-4 text-center font-bold text-white transition hover:bg-orange-400"
             >
               Assinar PRO
