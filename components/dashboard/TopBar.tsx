@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Notifications from './Notifications'
+import { signOut } from 'next-auth/react'
 
 export default function TopBar() {
   const [open, setOpen] = useState(false)
@@ -86,10 +87,15 @@ export default function TopBar() {
               className="cursor-pointer text-zinc-500 transition hover:text-white"
             />
 
-            <LogOut
-              size={18}
-              className="cursor-pointer text-zinc-500 transition hover:text-red-500"
-            />
+            <button
+  type="button"
+  onClick={() => void signOut({ callbackUrl: '/login' })}
+  aria-label="Sair da conta"
+  title="Sair"
+  className="shrink-0 rounded-md p-1 text-zinc-300 transition-colors hover:bg-red-500/10 hover:text-red-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+>
+  <LogOut size={18} aria-hidden="true" />
+</button>
           </div>
         </div>
       </header>
