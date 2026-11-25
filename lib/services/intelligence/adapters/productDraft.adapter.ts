@@ -29,74 +29,78 @@ export function buildDraftProduct(
   product: DraftProduct,
 ): ProductWithRelations {
   return {
-  id: 'draft',
+    id: 'draft',
 
-  title: product.title,
+    title: product.title,
 
-  description: product.description ?? '',
+    description: product.description ?? '',
 
-  shortDescription:
-    product.shortDescription ?? '',
+    shortDescription:
+      product.shortDescription ?? '',
 
-  category:
-    product.category ?? '',
+    category:
+      product.category ?? '',
 
-  image:
-    product.image ?? null,
+    image:
+      product.image ?? null,
 
-  price:
-    product.price,
+    price:
+      product.price,
 
-  costPrice:
-    product.costPrice ?? 0,
+    costPrice:
+      product.costPrice ?? 0,
 
-  stock:
-    product.stock ?? 0,
+    stock:
+      product.stock ?? 0,
 
-  brand:
-    product.brand ?? '',
+    brand:
+      product.brand ?? '',
 
-  model:
-    product.model ?? '',
+    model:
+      product.model ?? '',
 
-  sku:
-    product.sku ?? '',
+    sku:
+      product.sku ?? '',
 
-  ean:
-    product.ean ?? '',
+    ean:
+      product.ean ?? '',
 
-  weight:
-    product.weight ?? 0,
+    weight:
+      product.weight ?? 0,
 
-  height:
-    product.height ?? 0,
+    height:
+      product.height ?? 0,
 
-  width:
-    product.width ?? 0,
+    width:
+      product.width ?? 0,
 
-  length:
-    product.length ?? 0,
+    length:
+      product.length ?? 0,
 
-  createdAt: new Date(),
+    createdAt: new Date(),
 
-  updatedAt: new Date(),
+    updatedAt: new Date(),
 
-  userId: 'draft',
+    userId: 'draft',
 
-  marketplace: 'mercadolivre',
+    marketplace: 'mercadolivre',
 
-  marketplaceId: null,
+    marketplaceId: null,
 
-  permalink: null,
+    permalink: null,
 
-  status: 'draft',
+    status: 'draft',
 
-  mlCategoryId: null,
+    mlCategoryId: null,
 
-  resellerProductId: null,
+    marketplaceAttributes: null,
 
-  resellerProduct: null,
+    resellerProductId: null,
 
-  orders: [],
-} as ProductWithRelations
+    removedFromCatalog: false,
+
+    resellerProduct: null,
+
+    orders: [],
+  } as ProductWithRelations
 }
