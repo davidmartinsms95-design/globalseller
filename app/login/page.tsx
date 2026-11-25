@@ -23,7 +23,16 @@ export default function LoginPage() {
       })
 
       if (result?.ok) {
-        window.location.href = '/dashboard'
+        const params = new URLSearchParams(window.location.search)
+        const callbackUrl = params.get('callbackUrl')
+
+        const isSafeCallback =
+          callbackUrl !== null &&
+          callbackUrl.startsWith('/') &&
+          !callbackUrl.startsWith('//') &&
+          new URL(callbackUrl, window.location.origin).origin === window.location.origin
+
+        window.location.href = isSafeCallback ? callbackUrl : '/dashboard'
         return
       }
 
